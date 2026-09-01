@@ -1,1 +1,234 @@
-const K="niti-pwa-v1";const D={profile:{name:"Я",birthDate:""},threads:[{id:"birth",name:"Рождение",category:"Чувства",startDate:"",color:"#9d74ff",locked:true}],activity:[],events:[],people:[],money:[]};let s=load(),deferredPrompt=null;function load(){try{return {...structuredClone(D),...JSON.parse(localStorage.getItem(K)||"{}")}}catch{return structuredClone(D)}}function save(){localStorage.setItem(K,JSON.stringify(s));render()}function uid(){return crypto.randomUUID?crypto.randomUUID():Date.now()+"-"+Math.random()}function today(){return new Date().toISOString().slice(0,10)}function fmt(d){return d?new Date(d+"T12:00:00").toLocaleDateString("ru-RU"):"не указано"}function esc(x=""){return x.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}function modal(title,fields,cb){const m=document.getElementById("modal"),f=document.getElementById("modalForm"),w=document.getElementById("modalFields");modalTitle.textContent=title;w.innerHTML="";fields.forEach(x=>{let d=document.createElement("div");d.className="field";let l=document.createElement("label");l.textContent=x.label;let e=x.type==="select"?document.createElement("select"):x.type==="textarea"?document.createElement("textarea"):document.createElement("input");e.name=x.key;if(e.tagName==="INPUT")e.type=x.type||"text";if(x.options)x.options.forEach(o=>{let p=document.createElement("option");p.value=o.value;p.textContent=o.label;e.appendChild(p)});e.value=x.value??"";d.append(l,e);w.append(d)});f.onsubmit=e=>{e.preventDefault();let v={};for(const [k,val] of new FormData(f))v[k]=val;cb(v);m.close()};m.showModal()}function addActivity(){modal("Добавить активность",[{key:"kind",label:"Состояние",type:"select",options:[{value:"deepSleep",label:"Крепкий сон"},{value:"sleep",label:"Сон"},{value:"rest",label:"Отдых"},{value:"sitting",label:"Сидя / спокойно"},{value:"walking",label:"Ходьба"},{value:"running",label:"Бег"},{value:"workout",label:"Тренировка"}]},{key:"date",label:"Дата",type:"date",value:today()},{key:"time",label:"Время",type:"time",value:new Date().toTimeString().slice(0,5)},{key:"steps",label:"Шаги",type:"number",value:"0"},{key:"minutes",label:"Минуты",type:"number",value:"30"}],v=>{s.activity.push({id:uid(),...v,steps:+v.steps||0,minutes:+v.minutes||0});save()})}function addThread(){modal("Новая нить",[{key:"name",label:"Название"},{key:"category",label:"Категория"},{key:"startDate",label:"Когда появилась",type:"date",value:today()},{key:"color",label:"Цвет",type:"color",value:"#6fa8ff"}],v=>{s.threads.push({id:uid(),...v});save()})}function addEvent(){modal("Новое событие",[{key:"title",label:"Название"},{key:"date",label:"Дата",type:"date",value:today()},{key:"place",label:"Место"},{key:"note",label:"Описание",type:"textarea"}],v=>{s.events.push({id:uid(),...v});save()})}function addPerson(){modal("Добавить человека",[{key:"name",label:"Имя"},{key:"relation",label:"Кто это"},{key:"birthDate",label:"Дата рождения",type:"date"}],v=>{s.people.push({id:uid(),...v});save()})}function addMoney(){modal("Финансовая операция",[{key:"type",label:"Тип",type:"select",options:[{value:"income",label:"Доход"},{value:"expense",label:"Расход"}]},{key:"amount",label:"Сумма",type:"number",value:"0"},{key:"category",label:"Категория"},{key:"date",label:"Дата",type:"date",value:today()}],v=>{s.money.push({id:uid(),...v,amount:+v.amount||0});save()})}const I={deepSleep:-1,sleep:-.72,rest:-.2,sitting:-.05,walking:.42,running:.76,workout:1};function draw(){const a=pulseCanvas,r=a.getBoundingClientRect(),q=devicePixelRatio||1;a.width=r.width*q;a.height=r.height*q;const c=a.getContext("2d");c.scale(q,q);const w=r.width,h=r.height,L=16,R=16,M=h*.5,A=h*.33;c.strokeStyle="#ffffff18";c.beginPath();c.moveTo(L,M);c.lineTo(w-R,M);c.stroke();const b=s.profile.birthDate?new Date(s.profile.birthDate+"T00:00:00").getTime():Date.now(),n=Date.now(),span=Math.max(1,n-b),xf=(d,t="12:00")=>L+(w-L-R)*Math.max(0,Math.min(1,(new Date(d+"T"+t+":00").getTime()-b)/span));let p=new Path2D();p.moveTo(L,M);let pts=[...s.activity].sort((x,y)=>(x.date+x.time).localeCompare(y.date+y.time));if(!pts.length){for(let x=L;x<=w-R;x+=9)p.lineTo(x,M+Math.sin((x-L)/28)*2)}else{p.lineTo(xf(pts[0].date,pts[0].time),M);pts.forEach(x=>p.lineTo(xf(x.date,x.time),M-(I[x.kind]||0)*A));p.lineTo(w-R,M)}c.strokeStyle="#5ea8ff33";c.lineWidth=10;c.stroke(p);c.strokeStyle="#e8f2ff";c.lineWidth=3;c.stroke(p);s.threads.filter(t=>t.id!=="birth").forEach((t,i)=>{let sx=xf(t.startDate||today());c.beginPath();c.moveTo(sx,M);for(let x=sx;x<=w-R;x+=6)c.lineTo(x,M+Math.sin((x-sx)/24+i*.8)*(4+i*.3));c.globalAlpha=.72;c.strokeStyle=t.color||"#6fa8ff";c.lineWidth=2.2;c.stroke();c.globalAlpha=1});c.fillStyle="#9d74ff";c.beginPath();c.arc(L,M,6,0,Math.PI*2);c.fill();c.fillStyle="#6fa8ff";c.beginPath();c.arc(w-R,M,7,0,Math.PI*2);c.fill()}function render(){let total=s.activity.reduce((a,x)=>a+(+x.steps||0),0),td=s.activity.filter(x=>x.date===today()).reduce((a,x)=>a+(+x.steps||0),0),yr=s.activity.filter(x=>x.date?.startsWith(String(new Date().getFullYear()))).reduce((a,x)=>a+(+x.steps||0),0);stepsToday.textContent=td.toLocaleString("ru-RU");stepsYear.textContent=yr.toLocaleString("ru-RU");stepsLife.textContent=total.toLocaleString("ru-RU");birthLabel.textContent=s.profile.birthDate?"Рождение • "+new Date(s.profile.birthDate).getFullYear():"Рождение";threadList.innerHTML=s.threads.map(t=>`<div class="card"><div class="card-row"><span class="dot" style="background:${t.color}"></span><div><b>${esc(t.name)}</b><div class="meta">${esc(t.category||"")} • с ${fmt(t.startDate)}</div></div></div></div>`).join("");eventList.innerHTML=s.events.length?s.events.map(e=>`<div class="card"><b>${esc(e.title)}</b><div class="meta">${fmt(e.date)} ${esc(e.place||"")}</div></div>`).join(""):'<div class="empty">Добавь первое событие</div>';peopleList.innerHTML=s.people.length?s.people.map(p=>`<div class="card"><b>${esc(p.name)}</b><div class="meta">${esc(p.relation||"")}</div></div>`).join(""):'<div class="empty">Людей пока нет</div>';let inc=s.money.filter(x=>x.type==="income").reduce((a,x)=>a+x.amount,0),exp=s.money.filter(x=>x.type==="expense").reduce((a,x)=>a+x.amount,0);moneyIncome.textContent=inc;moneyExpense.textContent=exp;moneyBalance.textContent=inc-exp;moneyList.innerHTML=s.money.length?s.money.map(x=>`<div class="card"><b>${esc(x.category||"Без категории")}</b><div class="meta">${fmt(x.date)} • ${x.type==="income"?"+":"−"}${x.amount}</div></div>`).join(""):'<div class="empty">Операций пока нет</div>';requestAnimationFrame(draw)}document.querySelectorAll(".bottom-nav button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".bottom-nav button").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll(".screen").forEach(x=>x.classList.toggle("active",x.id===b.dataset.screen))});addActivityBtn.onclick=addActivity;addThreadBtn.onclick=addThread;addEventBtn.onclick=addEvent;addPersonBtn.onclick=addPerson;addMoneyBtn.onclick=addMoney;if("serviceWorker"in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js"));window.addEventListener("resize",draw);window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;installBtn.hidden=false});installBtn.onclick=async()=>{if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;installBtn.hidden=true}};if(!s.profile.birthDate){modal("Начало линии",[{key:"name",label:"Имя",value:"Я"},{key:"birthDate",label:"Дата рождения",type:"date"}],v=>{s.profile=v;s.threads[0].startDate=v.birthDate;save()})}render();
+const $=id=>document.getElementById(id);
+const KEY="niti-clean-v1";
+const base={
+  profile:{name:"",birthDate:""},
+  layers:{threads:true,events:true,plans:true,finance:true,activity:true},
+  threads:[],events:[],plans:[],finance:[],activity:[]
+};
+let s=JSON.parse(localStorage.getItem(KEY)||"null")||structuredClone(base);
+s={...base,...s,profile:{...base.profile,...(s.profile||{})},layers:{...base.layers,...(s.layers||{})}};
+const save=()=>localStorage.setItem(KEY,JSON.stringify(s));
+const today=()=>new Date().toISOString().slice(0,10);
+const esc=x=>String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+
+let zoom=1, pan=0;
+const MIN_ZOOM=1,MAX_ZOOM=250000;
+const canvas=$("lifeCanvas"),wrap=$("canvasWrap");
+const ctx=canvas.getContext("2d");
+
+function bounds(){
+  const birth=s.profile.birthDate?new Date(s.profile.birthDate+"T00:00:00").getTime():new Date(new Date().getFullYear()-40,0,1).getTime();
+  let end=Date.now();
+  for(const p of s.plans){
+    if(!p.date)continue;
+    const ms=new Date(p.date+"T"+(p.time||"23:59")+":00").getTime();
+    if(Number.isFinite(ms)) end=Math.max(end,ms);
+  }
+  return {birth,end,span:Math.max(1,end-birth)};
+}
+function draw(){
+  const r=wrap.getBoundingClientRect(),dpr=Math.max(1,devicePixelRatio||1);
+  canvas.width=Math.round(r.width*dpr);canvas.height=Math.round(r.height*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  const w=r.width,h=r.height;ctx.clearRect(0,0,w,h);
+  const {birth,end,span}=bounds();
+  const pad=28,usable=w-pad*2,content=usable*zoom,left=pad-(content-usable)/2+pan,cy=h/2;
+  const xFor=ms=>left+((ms-birth)/span)*content;
+  const visible=x=>x>-50&&x<w+50;
+  const startMs=birth+Math.max(0,(-left)/content)*span;
+  const endMs=birth+Math.min(1,(w-left)/content)*span;
+  const vspan=Math.max(1,endMs-startMs);
+  const D=86400000,H=3600000,MIN=60000;
+
+  // central life axis = zero baseline for finance/activity
+  ctx.strokeStyle="rgba(215,228,255,.35)";ctx.lineWidth=1.4;
+  ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(w,cy);ctx.stroke();
+
+  // adaptive scale
+  let last=-1e9;
+  function tick(ms,label,strong=false){
+    const x=xFor(ms);if(!visible(x))return;
+    ctx.strokeStyle=strong?"rgba(205,220,255,.18)":"rgba(190,210,255,.10)";
+    ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,18);ctx.lineTo(x,h-26);ctx.stroke();
+    if(label&&x-last>54){ctx.fillStyle="#8fa2bc";ctx.font="10px system-ui";ctx.textAlign="center";ctx.fillText(label,x,h-8);last=x}
+  }
+
+  const mid=new Date((startMs+endMs)/2);
+  $("watermark").textContent="";
+  if(vspan>5*365.25*D){
+    const ys=new Date(startMs).getFullYear()-1,ye=new Date(endMs).getFullYear()+1;
+    const years=vspan/(365.25*D);let st=10;if(years<25)st=5;if(years<12)st=2;if(years<7)st=1;
+    for(let y=Math.ceil(ys/st)*st;y<=ye;y+=st)tick(new Date(y,0,1).getTime(),String(y),true);
+    $("scaleTitle").textContent="Годы";
+  }else if(vspan>2*D){
+    $("watermark").textContent=mid.getFullYear();
+    let d=new Date(startMs);d.setHours(0,0,0,0);
+    const px=w/Math.max(1,vspan/D);let every=1;if(px<44)every=7;else if(px<64)every=3;else if(px<84)every=2;
+    let i=0;
+    for(;d.getTime()<=endMs+D;d.setDate(d.getDate()+1),i++)tick(d.getTime(),i%every===0?d.toLocaleDateString("ru-RU",{day:"2-digit",month:"short"}):"",true);
+    $("scaleTitle").textContent=vspan>60*D?"Месяцы":"Дни";
+  }else{
+    const step=vspan<=3*H?10*MIN:vspan<=18*H?30*MIN:H;
+    $("scaleTitle").textContent=step===10*MIN?"Часы • 10 мин":step===30*MIN?"Часы • 30 мин":"Часы • 1 час";
+    $("watermark").textContent=mid.toLocaleDateString("ru-RU",{day:"2-digit",month:"long"});
+    let t=Math.floor(startMs/step)*step;
+    for(;t<=endMs+step;t+=step){
+      const d=new Date(t),label=step===H?d.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"}):
+        (d.getMinutes()===0?d.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"}):"");
+      tick(t,label,d.getMinutes()===0);
+    }
+  }
+
+  // base life waveform
+  ctx.save();
+  ctx.strokeStyle="#9a7dff";ctx.lineWidth=2.5;ctx.shadowColor="#7d68ff";ctx.shadowBlur=10;
+  ctx.beginPath();
+  for(let i=0;i<=220;i++){
+    const t=i/220,x=left+t*content;if(!visible(x))continue;
+    const y=cy+Math.sin(t*Math.PI*20)*8;
+    i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+  }
+  ctx.stroke();ctx.restore();
+
+  // threads
+  if(s.layers.threads){
+    s.threads.forEach((th,idx)=>{
+      const ms=new Date((th.startDate||s.profile.birthDate||today())+"T12:00:00").getTime();
+      const st=Math.max(0,Math.min(1,(ms-birth)/span));
+      ctx.strokeStyle=th.color||"#67d6a4";ctx.globalAlpha=.8;ctx.lineWidth=2;
+      ctx.beginPath();let started=false;
+      for(let j=0;j<=180;j++){
+        const t=st+(1-st)*(j/180),x=left+t*content;if(!visible(x))continue;
+        const y=cy+Math.sin(t*Math.PI*18+idx*.75)*(18+idx*4);
+        if(!started){ctx.moveTo(x,y);started=true}else ctx.lineTo(x,y)
+      }
+      if(started)ctx.stroke();
+      ctx.globalAlpha=1;
+    });
+  }
+
+  // finance cardiogram on same zero axis: + above, - below
+  if(s.layers.finance){
+    ctx.save();
+    ctx.strokeStyle="#61e3a6";ctx.lineWidth=2;ctx.shadowColor="#61e3a6";ctx.shadowBlur=8;
+    for(const f of s.finance){
+      if(!f.date)continue;
+      const ms=new Date(f.date+"T"+(f.time||"12:00")+":00").getTime(),x=xFor(ms);if(!visible(x))continue;
+      const val=Number(f.amount)||0;
+      const amp=Math.min(92,18+Math.log10(Math.abs(val)+1)*18);
+      const dir=val>=0?-1:1; // canvas y: up is negative
+      const y=cy+dir*amp,wv=18;
+      ctx.beginPath();ctx.moveTo(x-wv,cy);ctx.lineTo(x-wv*.45,cy);ctx.lineTo(x-wv*.15,cy+dir*7);
+      ctx.lineTo(x,y);ctx.lineTo(x+wv*.18,cy-dir*10);ctx.lineTo(x+wv*.45,cy);ctx.lineTo(x+wv,cy);ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // activity on same axis: sleep below, physical activity above
+  if(s.layers.activity){
+    ctx.save();ctx.strokeStyle="#38c7ff";ctx.lineWidth=2;ctx.shadowColor="#38c7ff";ctx.shadowBlur=8;
+    for(const a of s.activity){
+      if(!a.date)continue;
+      const ms=new Date(a.date+"T"+(a.time||"12:00")+":00").getTime(),x=xFor(ms);if(!visible(x))continue;
+      const sleep=a.kind==="sleep";
+      const metric=sleep?(Number(a.minutes)||0):(Number(a.steps)||0)+(Number(a.minutes)||0)*60+(Number(a.km)||0)*300;
+      const amp=Math.min(85,16+Math.log10(metric+1)*17),dir=sleep?1:-1,wv=15;
+      ctx.beginPath();ctx.moveTo(x-wv,cy);ctx.lineTo(x-wv*.45,cy);ctx.lineTo(x-wv*.1,cy+dir*6);
+      ctx.lineTo(x,cy+dir*amp);ctx.lineTo(x+wv*.18,cy-dir*7);ctx.lineTo(x+wv*.45,cy);ctx.lineTo(x+wv,cy);ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // events and plans
+  if(s.layers.events) for(const e of s.events) drawMarker(e,false);
+  if(s.layers.plans) for(const p of s.plans.filter(x=>!x.done)) drawMarker(p,true);
+
+  function drawMarker(item,plan){
+    if(!item.date)return;
+    const ms=new Date(item.date+"T"+(item.time||"12:00")+":00").getTime(),x=xFor(ms);if(!visible(x))return;
+    ctx.save();ctx.globalAlpha=plan?.45:1;ctx.fillStyle=plan?"#f0bd65":"#ffffff";ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=12;
+    ctx.beginPath();ctx.arc(x,cy,plan?5:6,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+    if(vspan<10*365.25*D){
+      ctx.font="11px system-ui";ctx.textAlign="left";ctx.fillStyle=plan?"rgba(240,189,101,.65)":"#dce8fb";
+      ctx.fillText(item.title|| (plan?"План":"Событие"),x+8,cy-(plan?18:30));
+    }
+    ctx.restore();
+  }
+}
+
+let pointers=new Map(),lastDist=0,startX=0,startPan=0;
+wrap.addEventListener("pointerdown",e=>{
+  e.preventDefault();wrap.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pointers.size===1){startX=e.clientX;startPan=pan}
+  if(pointers.size===2){const a=[...pointers.values()];lastDist=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)}
+},{passive:false});
+wrap.addEventListener("pointermove",e=>{
+  if(!pointers.has(e.pointerId))return;e.preventDefault();pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pointers.size===2){
+    const a=[...pointers.values()],dist=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
+    if(lastDist>0){
+      const ratio=Math.max(.92,Math.min(1.08,dist/lastDist));
+      zoom=Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,zoom*Math.pow(ratio,.7)));
+      lastDist=dist;draw();
+    }
+  }else if(pointers.size===1){pan=startPan+(e.clientX-startX)*.72;draw()}
+},{passive:false});
+["pointerup","pointercancel"].forEach(t=>wrap.addEventListener(t,e=>{
+  e.preventDefault();pointers.delete(e.pointerId);if(pointers.size===1){const a=[...pointers.values()][0];startX=a.x;startPan=pan}
+  if(pointers.size<2)lastDist=0;draw()
+},{passive:false}));
+
+$("resetView").onclick=()=>{zoom=1;pan=0;draw()};
+document.querySelectorAll("[data-layer]").forEach(b=>b.onclick=()=>{
+  const k=b.dataset.layer;s.layers[k]=!s.layers[k];b.classList.toggle("active",s.layers[k]);save();draw();
+});
+function syncLayerButtons(){document.querySelectorAll("[data-layer]").forEach(b=>b.classList.toggle("active",!!s.layers[b.dataset.layer]))}
+
+const modal=$("modal"),fields=$("modalFields");
+let currentType="";
+function field(label,name,type="text",extra=""){
+  if(type==="select")return `<div class="field"><label>${label}</label><select name="${name}">${extra}</select></div>`;
+  if(type==="textarea")return `<div class="field"><label>${label}</label><textarea name="${name}" rows="3"></textarea></div>`;
+  return `<div class="field"><label>${label}</label><input name="${name}" type="${type}" ${extra}></div>`;
+}
+function openAdd(type){
+  currentType=type;const titles={thread:"Новая нить",event:"Новое событие",plan:"Новый план",finance:"Финансы",activity:"Активность"};
+  $("modalTitle").textContent=titles[type];
+  if(type==="thread")fields.innerHTML=field("Название","title")+field("Дата начала","date","date",`value="${today()}"`)+field("Цвет","color","color",'value="#67d6a4"');
+  if(type==="event")fields.innerHTML=field("Название","title")+field("Дата","date","date",`value="${today()}"`)+field("Время","time","time",'value="12:00"');
+  if(type==="plan")fields.innerHTML=field("Название","title")+field("Дата","date","date",`value="${today()}"`)+field("Время","time","time",'value="12:00"');
+  if(type==="finance")fields.innerHTML=field("Сумма (+ доход / − расход)","amount","number",'step="0.01"')+field("Дата","date","date",`value="${today()}"`)+field("Время","time","time",'value="12:00"');
+  if(type==="activity")fields.innerHTML=field("Тип","kind","select",'<option value="walk">Ходьба</option><option value="run">Бег</option><option value="bike">Велосипед</option><option value="swim">Плавание</option><option value="workout">Тренировка</option><option value="sleep">Сон</option>')+field("Дата","date","date",`value="${today()}"`)+field("Время","time","time",'value="12:00"')+field("Шаги","steps","number")+field("Минуты","minutes","number")+field("Км","km","number",'step="0.1"');
+  modal.showModal();
+}
+document.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>openAdd(b.dataset.add));
+$("modalForm").addEventListener("submit",e=>{
+  if(e.submitter?.value==="cancel")return;
+  e.preventDefault();const fd=new FormData(e.currentTarget),o=Object.fromEntries(fd.entries());
+  if(currentType==="thread")s.threads.push({id:crypto.randomUUID(),name:o.title,startDate:o.date,color:o.color});
+  if(currentType==="event")s.events.push({id:crypto.randomUUID(),title:o.title,date:o.date,time:o.time});
+  if(currentType==="plan")s.plans.push({id:crypto.randomUUID(),title:o.title,date:o.date,time:o.time,done:false});
+  if(currentType==="finance")s.finance.push({id:crypto.randomUUID(),amount:Number(o.amount),date:o.date,time:o.time});
+  if(currentType==="activity")s.activity.push({id:crypto.randomUUID(),kind:o.kind,date:o.date,time:o.time,steps:Number(o.steps)||0,minutes:Number(o.minutes)||0,km:Number(o.km)||0});
+  save();modal.close();render();draw();
+});
+$("profileBtn").onclick=()=>{
+  currentType="profile";$("modalTitle").textContent="Профиль";
+  fields.innerHTML=field("Имя","name","text",`value="${esc(s.profile.name)}"`)+field("Дата рождения","birthDate","date",s.profile.birthDate?`value="${s.profile.birthDate}"`:"");
+  modal.showModal();
+};
+$("modalForm").addEventListener("submit",e=>{
+  if(currentType!=="profile"||e.submitter?.value==="cancel")return;
+  e.preventDefault();const fd=new FormData(e.currentTarget);s.profile.name=fd.get("name")||"";s.profile.birthDate=fd.get("birthDate")||"";save();modal.close();render();draw();
+},{capture:true});
+
+function render(){
+  syncLayerButtons();
+  $("eventsList").className="list"+(s.events.length?"":" empty");
+  $("eventsList").innerHTML=s.events.length?s.events.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>`<div class="item"><b>${esc(e.title||"Событие")}</b><div class="meta">${esc(e.date)} ${esc(e.time||"")}</div></div>`).join(""):"Пока нет событий";
+  $("plansList").className="list"+(s.plans.length?"":" empty");
+  $("plansList").innerHTML=s.plans.length?s.plans.slice().sort((a,b)=>(a.date||"").localeCompare(b.date||"")).map(p=>`<div class="item"><b>${esc(p.title||"План")}</b><div class="meta">${esc(p.date)} ${esc(p.time||"")}</div></div>`).join(""):"Пока нет планов";
+}
+window.addEventListener("resize",draw);
+render();draw();
+if(!s.profile.birthDate)setTimeout(()=>$("profileBtn").click(),250);

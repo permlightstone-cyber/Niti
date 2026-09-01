@@ -1,1 +1,82 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1020"><title>Нити — Пульс жизни</title><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css"></head><body><div id="app"><header class="topbar"><div><div class="brand">Нити</div><div class="subtitle">Пульс жизни</div></div><button id="installBtn" class="ghost" hidden>Установить</button></header><main><section id="home" class="screen active"><div class="hero"><div class="eyebrow">Главная нить</div><h1>Пульс моей жизни</h1><p>С рождения до сегодня. Сон уходит вниз, движение и тренировки поднимаются вверх. Другие нити вплетаются по датам.</p></div><div class="pulse-card"><canvas id="pulseCanvas"></canvas><div class="pulse-axis"><span id="birthLabel">Рождение</span><span>Сегодня</span></div></div><div class="legend"><span>🌙 крепкий сон ↓</span><span>🪑 покой</span><span>🚶 ходьба ↑</span><span>🏃 бег ↑↑</span><span>🏋️ тренировка ↑↑↑</span></div><div class="stats"><div class="stat"><b id="stepsToday">0</b><span>шагов сегодня</span></div><div class="stat"><b id="stepsYear">0</b><span>за год</span></div><div class="stat"><b id="stepsLife">0</b><span>за жизнь*</span></div></div><div class="hint">* Только реально внесённые или импортированные данные.</div><div class="actions"><button id="addActivityBtn" class="primary">+ Активность</button><button id="addThreadBtn" class="secondary">+ Нить</button></div><h2>Нити, вплетённые в жизнь</h2><div id="threadList" class="cards"></div></section><section id="events" class="screen"><div class="section-head"><h1>События</h1><button id="addEventBtn" class="primary small">+ Событие</button></div><div id="eventList" class="cards"></div></section><section id="people" class="screen"><div class="section-head"><h1>Люди</h1><button id="addPersonBtn" class="primary small">+ Человек</button></div><div id="peopleList" class="cards"></div></section><section id="finance" class="screen"><div class="section-head"><h1>Финансы</h1><button id="addMoneyBtn" class="primary small">+ Операция</button></div><div class="money-summary"><div class="stat"><b id="moneyBalance">0</b><span>баланс</span></div><div class="stat"><b id="moneyIncome">0</b><span>доходы</span></div><div class="stat"><b id="moneyExpense">0</b><span>расходы</span></div></div><div id="moneyList" class="cards"></div></section></main><nav class="bottom-nav"><button data-screen="home" class="active">⌁<span>Линия</span></button><button data-screen="events">◉<span>События</span></button><button data-screen="people">♧<span>Люди</span></button><button data-screen="finance">₽<span>Финансы</span></button></nav></div><dialog id="modal"><form method="dialog" id="modalForm"><h3 id="modalTitle"></h3><div id="modalFields"></div><div class="modal-actions"><button value="cancel" class="ghost">Отмена</button><button id="modalSave" value="default" class="primary">Сохранить</button></div></form></dialog><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#08101c" />
+  <title>Нити</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <div class="brand">Нити</div>
+        <div class="subtitle">Линия жизни</div>
+      </div>
+      <button id="profileBtn" class="ghost">Профиль</button>
+    </header>
+
+    <section class="filters" id="filters">
+      <button class="chip active" data-layer="threads">Нити</button>
+      <button class="chip active" data-layer="events">События</button>
+      <button class="chip active" data-layer="plans">Планы</button>
+      <button class="chip active" data-layer="finance">Финансы</button>
+      <button class="chip active" data-layer="activity">Активность</button>
+    </section>
+
+    <section class="timeline-card">
+      <div class="timeline-head">
+        <div>
+          <b id="scaleTitle">Вся жизнь</b>
+          <span id="scaleHint">масштабируй двумя пальцами</span>
+        </div>
+        <button id="resetView" class="ghost small">Сброс</button>
+      </div>
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="lifeCanvas"></canvas>
+        <div id="watermark" class="watermark"></div>
+      </div>
+      <div class="legend">
+        <span><i class="line finance"></i> Финансы: − ниже / + выше</span>
+        <span><i class="line activity"></i> Сон ниже / активность выше</span>
+      </div>
+    </section>
+
+    <section class="actions">
+      <button data-add="thread">+ Нить</button>
+      <button data-add="event">+ Событие</button>
+      <button data-add="plan">+ План</button>
+      <button data-add="finance">+ Финансы</button>
+      <button data-add="activity">+ Активность</button>
+    </section>
+
+    <section class="panel-grid">
+      <div class="panel">
+        <h3>События</h3>
+        <div id="eventsList" class="list empty">Пока нет событий</div>
+      </div>
+      <div class="panel">
+        <h3>Планы</h3>
+        <div id="plansList" class="list empty">Пока нет планов</div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="modal">
+    <form method="dialog" id="modalForm">
+      <div class="modal-head">
+        <b id="modalTitle">Добавить</b>
+        <button value="cancel" class="ghost">✕</button>
+      </div>
+      <div id="modalFields"></div>
+      <menu>
+        <button value="cancel" class="ghost">Отмена</button>
+        <button value="default" id="saveModal">Сохранить</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
