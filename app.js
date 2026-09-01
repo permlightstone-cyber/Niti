@@ -15,6 +15,7 @@ let zoom=1, pan=0;
 const MIN_ZOOM=1,MAX_ZOOM=250000;
 const canvas=$("lifeCanvas"),wrap=$("canvasWrap");
 const ctx=canvas.getContext("2d");
+if(!ctx) throw new Error("Canvas 2D недоступен");
 
 function bounds(){
   const birth=s.profile.birthDate?new Date(s.profile.birthDate+"T00:00:00").getTime():new Date(new Date().getFullYear()-40,0,1).getTime();
@@ -27,7 +28,11 @@ function bounds(){
   return {birth,end,span:Math.max(1,end-birth)};
 }
 function draw(){
-  const r=wrap.getBoundingClientRect(),dpr=Math.max(1,devicePixelRatio||1);
+  let r=wrap.getBoundingClientRect();
+  if(r.width<10||r.height<10){
+    r={width:Math.max(320,window.innerWidth-28),height:Math.max(420,window.innerHeight*.56)};
+  }
+  const dpr=Math.max(1,devicePixelRatio||1);
   canvas.width=Math.round(r.width*dpr);canvas.height=Math.round(r.height*dpr);
   ctx.setTransform(dpr,0,0,dpr,0,0);
   const w=r.width,h=r.height;ctx.clearRect(0,0,w,h);
@@ -202,25 +207,7 @@ function openAdd(type){
   modal.showModal();
 }
 document.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>openAdd(b.dataset.add));
-$("modalForm").addEventListener("submit",e=>{
-  if(e.submitter?.value==="cancel")return;
-  e.preventDefault();const fd=new FormData(e.currentTarget),o=Object.fromEntries(fd.entries());
-  if(currentType==="thread")s.threads.push({id:crypto.randomUUID(),name:o.title,startDate:o.date,color:o.color});
-  if(currentType==="event")s.events.push({id:crypto.randomUUID(),title:o.title,date:o.date,time:o.time});
-  if(currentType==="plan")s.plans.push({id:crypto.randomUUID(),title:o.title,date:o.date,time:o.time,done:false});
-  if(currentType==="finance")s.finance.push({id:crypto.randomUUID(),amount:Number(o.amount),date:o.date,time:o.time});
-  if(currentType==="activity")s.activity.push({id:crypto.randomUUID(),kind:o.kind,date:o.date,time:o.time,steps:Number(o.steps)||0,minutes:Number(o.minutes)||0,km:Number(o.km)||0});
-  save();modal.close();render();draw();
-});
-$("profileBtn").onclick=()=>{
-  currentType="profile";$("modalTitle").textContent="Профиль";
-  fields.innerHTML=field("Имя","name","text",`value="${esc(s.profile.name)}"`)+field("Дата рождения","birthDate","date",s.profile.birthDate?`value="${s.profile.birthDate}"`:"");
-  modal.showModal();
-};
-$("modalForm").addEventListener("submit",e=>{
-  if(currentType!=="profile"||e.submitter?.value==="cancel")return;
-  e.preventDefault();const fd=new FormData(e.currentTarget);s.profile.name=fd.get("name")||"";s.profile.birthDate=fd.get("birthDate")||"";save();modal.close();render();draw();
-},{capture:true});
+
 
 function render(){
   syncLayerButtons();
@@ -229,6 +216,13 @@ function render(){
   $("plansList").className="list"+(s.plans.length?"":" empty");
   $("plansList").innerHTML=s.plans.length?s.plans.slice().sort((a,b)=>(a.date||"").localeCompare(b.date||"")).map(p=>`<div class="item"><b>${esc(p.title||"План")}</b><div class="meta">${esc(p.date)} ${esc(p.time||"")}</div></div>`).join(""):"Пока нет планов";
 }
-window.addEventListener("resize",draw);
-render();draw();
-if(!s.profile.birthDate)setTimeout(()=>$("profileBtn").click(),250);
+window.addEventListener("resize",()=>requestAnimationFrame(draw));
+window.addEventListener("error",ev=>{
+  console.error(ev.error||ev.message);
+  const b=document.createElement("div");
+  b.style.cssText="position:fixed;left:10px;right:10px;bottom:10px;z-index:9999;background:#7f1d1d;color:white;padding:10px 12px;border-radius:12px;font:12px system-ui";
+  b.textContent="Ошибка приложения: "+(ev.message||"неизвестная ошибка");
+  document.body.appendChild(b);
+});
+requestAnimationFrame(()=>{render();draw();});
+if(!s.profile.birthDate)setTimeout(()=>$("profileBtn").click(),350);

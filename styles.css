@@ -53,3 +53,20 @@ dialog::backdrop{background:rgba(0,0,0,.68)}
 .field input,.field select,.field textarea{width:100%;background:#091321;border:1px solid rgba(255,255,255,.09);color:#fff;border-radius:12px;padding:11px}
 menu{display:flex;justify-content:flex-end;gap:8px;padding:12px 0 0;margin:0}
 @media(max-width:760px){.canvas-wrap{height:58vh;min-height:390px}.panel-grid{grid-template-columns:1fr}.brand{font-size:24px}}
+
+.actions button,.chip,#saveModal{
+  background:linear-gradient(135deg,#745dff,#3c8cff)!important;
+  color:#fff!important;
+  border:0!important;
+}
+.chip{
+  background:#0b1524!important;
+  border:1px solid rgba(255,255,255,.07)!important;
+  color:#72829c!important;
+}
+.chip.active{
+  color:#eef4ff!important;
+  border-color:rgba(139,114,255,.55)!important;
+  background:linear-gradient(135deg,rgba(116,93,255,.32),rgba(60,140,255,.18))!important;
+}
+.canvas-wrap{min-height:420px}
