@@ -1,0 +1,1502 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#080d18">
+<title>Нити — Live Lab</title>
+<style>
+:root{
+  --bg:#060914;--panel:#11192a;--panel2:#172239;--text:#f7f8ff;--muted:#9aa8c2;
+  --a:#65a8ff;--b:#a26cff;--c:#57dfc2;--pink:#ff73c8;--ok:#65d69b;--bad:#ff8b8b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:radial-gradient(circle at top,#111b32,#070b14 45%);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+body{padding-bottom:82px;background:
+radial-gradient(circle at 15% 0%,rgba(101,168,255,.18),transparent 30%),
+radial-gradient(circle at 90% 18%,rgba(162,108,255,.18),transparent 28%),
+radial-gradient(circle at 50% 80%,rgba(87,223,194,.08),transparent 34%),
+#060914}
+.top{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;padding:13px 16px;background:rgba(7,11,20,.9);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.06)}
+.brand{font-size:22px;font-weight:850}.sub{font-size:11px;color:var(--muted)}
+main{max-width:980px;margin:auto;padding:15px}
+.screen{display:none}.screen.active{display:block}
+.eyebrow{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#82aaff;font-weight:800}
+h1{font-size:31px;margin:7px 0}h2{margin:16px 0 10px}p{color:var(--muted);line-height:1.45}
+.card,.event-card,.person-card,.tx-card{
+background:linear-gradient(145deg,rgba(20,31,52,.96),rgba(12,20,35,.96));
+border:1px solid rgba(143,170,255,.13);border-radius:24px;padding:15px;
+box-shadow:0 14px 34px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.03)
+}
+.cards{display:grid;gap:9px}
+.row{display:flex;gap:10px;align-items:center}.meta{color:var(--muted);font-size:12px;margin-top:3px}
+.dot{width:12px;height:12px;border-radius:50%;box-shadow:0 0 14px currentColor;flex:0 0 auto}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:14px 0}
+.btn{border:0;border-radius:18px;padding:13px 15px;font:inherit;font-weight:800;color:white;
+background:linear-gradient(135deg,var(--a),var(--b));cursor:pointer;
+box-shadow:0 8px 24px rgba(112,116,255,.24)}
+.btn.alt{background:linear-gradient(145deg,#18243c,#111a2d);border:1px solid rgba(132,161,220,.22);box-shadow:none}
+.btn:disabled{opacity:.45}
+.dna-card{margin-top:16px;background:
+linear-gradient(180deg,rgba(20,31,54,.97),rgba(9,15,27,.98));
+border:1px solid rgba(130,165,255,.18);border-radius:30px;padding:14px;overflow:hidden;
+box-shadow:0 20px 55px rgba(0,0,0,.28),0 0 35px rgba(101,168,255,.08)}
+.canvas-wrap{position:relative;height:330px;touch-action:none;overscroll-behavior:contain}
+#dna{display:block;width:100%;height:100%;touch-action:none}
+.zoom-badge{position:absolute;right:10px;top:10px;background:rgba(7,11,20,.76);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:7px 10px;font-size:11px;color:#bdc9dc}
+.hint{text-align:center;color:#7f8da4;font-size:11px;margin-top:8px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:13px}
+.stat{background:linear-gradient(145deg,#15213a,#10182a);border:1px solid rgba(255,255,255,.07);
+border-radius:22px;padding:14px 7px;text-align:center;box-shadow:0 10px 26px rgba(0,0,0,.18)}
+.stat b{display:block;font-size:19px}.stat span{display:block;color:var(--muted);font-size:10px;margin-top:3px}
+.section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:6px 0 14px}
+.section-head h2{margin:0}.pill{display:inline-flex;padding:7px 10px;border-radius:999px;background:#152039;color:#a9b9d4;font-size:12px}
+.event-card{border-left:4px solid #7aa7ff;margin-bottom:9px}
+.person-card,.tx-card{margin-bottom:9px}
+.person-avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#6e8fff,#9b6dff);font-weight:800}
+.finance-hero{background:linear-gradient(145deg,#16233a,#0e1727);border:1px solid rgba(255,255,255,.07);border-radius:22px;padding:18px;margin-bottom:13px}
+.balance{font-size:34px;font-weight:850;margin:5px 0}
+.finance-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
+.finance-mini{background:rgba(255,255,255,.04);border-radius:15px;padding:12px}
+.finance-mini span{display:block;color:var(--muted);font-size:11px}.finance-mini b{display:block;margin-top:4px}
+.tx-row{display:flex;align-items:center;gap:10px}.tx-icon{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#16233a}
+.tx-main{flex:1}.tx-amt{font-weight:800}.income{color:var(--ok)}.expense{color:var(--bad)}
+.empty{color:var(--muted);text-align:center;padding:28px 10px}
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:50;height:68px;background:rgba(8,13,24,.97);backdrop-filter:blur(18px);border-top:1px solid rgba(255,255,255,.06);display:grid;grid-template-columns:repeat(5,1fr)}
+.nav button{appearance:none;background:none;border:0;color:#78859b;font:inherit;font-size:11px;cursor:pointer;padding:4px 2px}
+.nav button.active{color:#a8c1ff}.nav i{display:block;font-style:normal;font-size:20px;margin-bottom:2px}
+dialog{width:min(92vw,460px);background:#101827;color:white;border:1px solid #2b3850;border-radius:20px;padding:17px}
+dialog::backdrop{background:rgba(0,0,0,.7)}
+.field{display:grid;gap:5px;margin:10px 0}.field label{font-size:12px;color:#9ba7bb}
+.field input,.field select{background:#0c1422;color:#fff;border:1px solid #2b3850;border-radius:11px;padding:11px;font:inherit;width:100%}
+.field input[type="color"]{height:48px;padding:4px}
+.dlg-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}.mutebtn{border:1px solid #2b3850;background:#151d2b;color:white;border-radius:12px;padding:10px 13px}
+
+.thread-card{position:relative;overflow:hidden}
+.thread-card::after{content:"";position:absolute;width:90px;height:90px;border-radius:50%;right:-35px;top:-35px;background:var(--thread-color);opacity:.08;filter:blur(2px)}
+.thread-main{display:flex;align-items:center;gap:12px}
+.thread-node{width:18px;height:18px;border-radius:50%;flex:0 0 auto;background:var(--thread-color);box-shadow:0 0 20px var(--thread-color),0 0 8px var(--thread-color)}
+.thread-actions{margin-left:auto;display:flex;gap:7px;position:relative;z-index:2}
+.icon-btn{border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.05);color:#dbe5ff;border-radius:14px;padding:8px 10px;font:inherit}
+.icon-btn:active{transform:scale(.96)}
+.field-note{font-size:11px;color:#7f8da4;margin-top:4px}
+.date-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.color-preview{height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)}
+
+
+.finance-app{margin:-15px -15px 0;min-height:calc(100vh - 68px);background:
+linear-gradient(180deg,#255844 0 205px,#162400 205px 100%);padding-bottom:22px}
+.fin-top{padding:12px 18px 0;color:#fff}
+.fin-top-row{display:grid;grid-template-columns:54px 1fr 54px;align-items:center}
+.fin-menu{border:0;background:none;color:white;font-size:34px;line-height:1;padding:4px}
+.fin-total-wrap{text-align:center}.fin-caption{font-size:16px;font-weight:700}.fin-total{font-size:40px;font-weight:850;line-height:1.05;margin-top:4px}
+.fin-main-tabs{display:grid;grid-template-columns:1fr 1fr;margin-top:8px}
+.fin-main-tab{border:0;background:none;color:rgba(255,255,255,.55);font:inherit;font-size:20px;font-weight:800;padding:10px 4px 13px;position:relative}
+.fin-main-tab.active{color:white}.fin-main-tab.active::after{content:"";position:absolute;height:4px;border-radius:4px;background:#fff7cf;left:18%;right:18%;bottom:0}
+.fin-panel{margin:0 14px;background:#2c2e27;border-radius:28px;padding:18px 14px 20px;box-shadow:0 18px 40px rgba(0,0,0,.30)}
+.fin-period-tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
+.fin-period-tabs button{border:0;background:none;color:#c6c6bd;font:inherit;font-size:16px;padding:10px 2px;position:relative}
+.fin-period-tabs button.active{color:#54d6aa;font-weight:800}.fin-period-tabs button.active::after{content:"";position:absolute;height:4px;border-radius:3px;background:#54d6aa;left:22%;right:22%;bottom:0}
+.fin-month-row{display:grid;grid-template-columns:52px 1fr 52px;align-items:center;margin:18px 0 8px}
+.fin-arrow,.fin-month-title{border:0;background:none;color:#f3f1e8;font:inherit}.fin-arrow{font-size:40px}.fin-month-title{text-decoration:underline;font-size:20px}
+.fin-chart-wrap{position:relative;display:grid;place-items:center;min-height:300px}
+.fin-donut{width:min(64vw,280px);aspect-ratio:1;border-radius:50%;position:relative;background:conic-gradient(#3489d8 0 25%,#57ade0 25% 45%,#ef2929 45% 57%,#f0d627 57% 65%,#3c7db8 65% 72%,#54a53d 72% 79%,#8ad777 79% 85%,#a8a8a8 85% 90%,#785ae6 90% 94%,#e5c400 94% 97%,#6ead68 97% 99%,#d84747 99% 100%);box-shadow:0 8px 20px rgba(0,0,0,.25)}
+.fin-donut::before{content:"";position:absolute;inset:7px;border-radius:50%;border:1px solid rgba(255,255,255,.18)}
+.fin-donut-hole{position:absolute;inset:31%;border-radius:50%;background:#2c2e27;border:5px dashed rgba(255,255,255,.12);display:grid;place-items:center}
+.fin-donut-total{font-size:24px;white-space:nowrap;color:#fff}
+.fin-plus{position:absolute;right:0;bottom:8px;width:68px;height:68px;border:0;border-radius:50%;background:#ffbf2f;color:#141414;font-size:48px;line-height:1;box-shadow:0 8px 22px rgba(0,0,0,.28)}
+.fin-category-list{padding:14px}.fin-cat{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:12px;background:#2d3028;border-radius:18px;padding:13px 14px;margin-bottom:10px;color:#f3f2e9;box-shadow:0 8px 18px rgba(0,0,0,.18)}
+.fin-cat-icon{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:22px;color:white}.fin-cat-name{font-size:20px}.fin-cat-right{text-align:right}.fin-cat-pct{display:inline-block;color:#c5c4ba;font-size:16px;margin-right:8px}.fin-cat-amt{font-size:18px}
+
+
+.tx-page{margin:-15px -15px 0;min-height:calc(100vh - 68px);background:#172400;color:#f4f3e9}
+.tx-header{height:92px;background:#255844;border-bottom-left-radius:34px;border-bottom-right-radius:34px;display:grid;grid-template-columns:56px 1fr 56px;align-items:center;padding:0 14px 8px}
+.tx-back{border:0;background:none;color:white;font-size:48px;line-height:1}.tx-title{text-align:left;font-size:25px;font-weight:800}
+.tx-tabs{margin-top:-1px;background:#255844;display:grid;grid-template-columns:1fr 1fr;padding:0 26px 15px;border-bottom-left-radius:34px;border-bottom-right-radius:34px}
+.tx-tab{border:0;background:none;color:rgba(255,255,255,.62);font:inherit;font-size:21px;font-weight:800;padding:12px 0;position:relative}
+.tx-tab.active{color:white}.tx-tab.active::after{content:"";position:absolute;height:4px;background:#fff6c8;left:10%;right:10%;bottom:2px;border-radius:4px}
+.tx-body{padding:30px 28px 34px}
+.tx-amount-row{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;margin-bottom:54px}
+#txAmount{border:0;border-bottom:3px solid #80866b;background:transparent;color:#fff;text-align:center;font-size:48px;width:100%;padding:4px 0 8px;outline:none}
+.tx-currency{font-size:28px;color:#50d7a8}.tx-calc{font-size:30px;color:#c6cbbb}
+.tx-block-label{font-size:22px;color:#9ca28c;margin:24px 0 8px}
+.tx-account{border:0;background:none;color:#4fd2a2;font:inherit;font-size:24px;padding:0}
+.tx-category-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:22px 18px;margin-top:28px}
+.tx-cat{border:0;background:none;color:#f5f4e8;text-align:center;font:inherit;padding:0}
+.tx-cat-circle{width:76px;height:76px;border-radius:50%;display:grid;place-items:center;margin:0 auto 8px;font-size:33px;color:white;box-shadow:0 8px 20px rgba(0,0,0,.2)}
+.tx-cat span{display:block;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-cat.selected .tx-cat-circle{outline:4px solid #53d5a5;outline-offset:4px}
+.tx-date-row{display:grid;grid-template-columns:repeat(3,1fr) 54px;gap:8px;align-items:end;margin-top:42px}
+.tx-date-choice{border:0;background:none;color:#e8e7da;padding:10px 4px;border-radius:8px;font:inherit}
+.tx-date-choice b,.tx-date-choice span{display:block}.tx-date-choice b{font-size:22px}.tx-date-choice span{font-size:18px;color:#bbbdae}
+.tx-date-choice.active{background:#57cda2;color:white}.tx-date-choice.active span{color:white}
+.tx-calendar{border:0;background:none;color:#4fd2a2;font-size:28px}
+.tx-tags-head{display:flex;justify-content:space-between}.tx-tags{display:flex;flex-wrap:wrap;gap:9px;margin:12px 0 22px}
+.tx-tags button{border:2px solid #38b98c;background:transparent;color:white;border-radius:14px;padding:8px 11px;font:inherit;font-size:16px}
+.tx-tags button.active{background:#38b98c;color:#102417}
+.tx-comment-wrap{display:grid;gap:8px;color:#8e947d;font-size:20px;margin-top:14px}
+.tx-comment-wrap input{border:0;border-bottom:2px solid #7c826b;background:transparent;color:white;font:inherit;padding:10px 0;outline:none}
+.tx-save{display:block;width:68%;margin:26px auto 0;border:0;border-radius:999px;padding:15px;background:#c39e24;color:#302b0b;font:inherit;font-size:22px;font-weight:800}
+@media(max-width:420px){
+ .tx-category-grid{gap:18px 12px}.tx-cat-circle{width:68px;height:68px}.tx-cat span{font-size:16px}
+ .tx-body{padding-left:20px;padding-right:20px}.tx-title{font-size:22px}
+}
+
+
+.life-dashboard{
+  display:grid;grid-template-columns:210px minmax(0,1fr) 360px;gap:12px;
+  min-height:calc(100vh - 118px)
+}
+.life-sidebar,.life-center,.event-preview{
+  background:linear-gradient(180deg,rgba(8,14,27,.96),rgba(6,11,20,.98));
+  border:1px solid rgba(130,165,255,.12);
+  border-radius:24px;
+}
+.life-sidebar{padding:16px 12px;display:flex;flex-direction:column;gap:8px}
+.side-title{font-size:11px;letter-spacing:.12em;color:#9c78ff;margin:4px 8px 6px}
+.side-item,.side-add{
+  border:0;background:transparent;color:#dbe3f3;font:inherit;
+  border-radius:14px;padding:11px 10px;text-align:left;display:flex;align-items:center;gap:10px
+}
+.side-item span{font-size:20px}.side-item.active{background:linear-gradient(135deg,rgba(125,92,255,.23),rgba(100,120,255,.12));color:white}
+.side-add{margin-top:6px;border:1px solid #754eff;color:#a67cff}
+.side-progress-card{
+  margin-top:auto;background:linear-gradient(145deg,#111a2d,#0c1424);
+  border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:14px
+}
+.side-progress-value{font-size:32px;font-weight:850;margin:5px 0}
+#sideProgressChart{width:100%;height:72px}
+.life-center{padding:0 14px 14px;overflow:hidden}
+.life-tabs{display:flex;gap:26px;border-bottom:1px solid rgba(255,255,255,.06);padding:4px 8px 0}
+.life-tabs button{border:0;background:none;color:#98a4b8;font:inherit;padding:13px 4px;position:relative}
+.life-tabs button.active{color:#b78cff}.life-tabs button.active::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;background:#9d74ff;border-radius:4px}
+.life-head{display:flex;justify-content:space-between;align-items:flex-start;padding:14px 7px 8px}
+.life-title{font-size:19px;font-weight:850}.life-today{text-align:right;color:#dfe5f0;font-size:12px}
+.dna-wide-card{
+  background:radial-gradient(circle at 50% 35%,rgba(60,80,170,.12),transparent 38%),#09111f;
+  border:1px solid rgba(124,157,255,.14);border-radius:22px;padding:10px
+}
+.dna-wide-wrap{height:330px;position:relative;touch-action:none}
+.life-bottom-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:10px;margin-top:10px}
+.life-info-card{background:linear-gradient(145deg,#111a2d,#0b1322);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:13px}
+.info-title{font-size:12px;font-weight:800;margin-bottom:10px}
+.impact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.impact-mini{background:#0c1424;border:1px solid rgba(255,255,255,.05);border-radius:14px;padding:10px;text-align:center;font-size:11px}
+.impact-mini b{display:block;font-size:18px;margin-top:7px}.impact-dot{width:12px;height:12px;border-radius:50%;margin:0 auto 6px}
+.purple{background:#9d74ff}.blue{background:#3aa5ff}.orange{background:#f19c24}
+.node-card{display:flex;flex-direction:column;justify-content:space-between}
+.mini-node{height:64px;margin-top:8px;border-radius:12px;background:
+radial-gradient(circle at 50% 50%,#fff 0 3px,#a16cff 4px 7px,transparent 8px),
+linear-gradient(15deg,transparent 48%,#7a56ff 49% 51%,transparent 52%),
+linear-gradient(-15deg,transparent 48%,#31b8ff 49% 51%,transparent 52%)}
+.event-preview{padding:12px;display:flex;flex-direction:column}
+.event-preview-head{display:grid;grid-template-columns:34px 1fr 34px;align-items:center;font-size:16px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.06)}
+.preview-back{border:0;background:none;color:white;font-size:32px}.preview-empty{text-align:center;padding:38px 18px;color:#9ba7bb}
+.preview-node{width:28px;height:28px;border-radius:50%;background:#9d74ff;margin:0 auto 12px;box-shadow:0 0 24px #9d74ff}
+.preview-card{display:grid;gap:11px;padding:14px 4px}
+.preview-chip-row{display:flex;justify-content:space-between;gap:8px}.preview-chip{padding:7px 10px;border-radius:10px;background:#102143;border:1px solid #2958a0;color:#cfe2ff;font-size:12px}
+.preview-title{font-size:22px;font-weight:850}.preview-photo{height:180px;border-radius:18px;background:
+linear-gradient(135deg,rgba(50,92,160,.65),rgba(21,34,58,.8)),
+radial-gradient(circle at 60% 35%,#5c7ba9,transparent 25%);
+display:grid;place-items:center;color:#dce7f8;font-size:13px}
+.preview-tags{display:flex;gap:7px;flex-wrap:wrap}.preview-tag{background:#101b30;border:1px solid rgba(255,255,255,.07);border-radius:999px;padding:7px 9px;font-size:11px}
+.preview-section{padding-top:10px;border-top:1px solid rgba(255,255,255,.06)}
+.preview-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto}.preview-actions button{border-radius:14px;padding:11px;border:1px solid rgba(255,255,255,.08);background:#141b32;color:#b18cff}.preview-actions .danger{background:#2d1018;color:#ff7474}
+.mobile-home-tools{margin-top:12px}
+@media(max-width:980px){
+ .life-dashboard{grid-template-columns:170px minmax(0,1fr)}
+ .event-preview{display:none}
+}
+@media(max-width:760px){
+ .life-dashboard{display:block}
+ .life-sidebar{display:none}
+ .life-center{border-radius:20px}
+ .dna-wide-wrap{height:290px}
+ .life-bottom-grid{grid-template-columns:1fr}
+ .impact-grid{grid-template-columns:repeat(3,1fr)}
+}
+
+
+.event-label{
+  position:absolute;pointer-events:none;transform:translate(-50%,-100%);
+  min-width:90px;max-width:170px;padding:7px 10px;border-radius:12px;
+  background:rgba(9,15,28,.9);border:1px solid rgba(132,165,255,.25);
+  color:#eef3ff;font-size:11px;line-height:1.2;text-align:center;
+  box-shadow:0 8px 22px rgba(0,0,0,.35),0 0 18px rgba(122,167,255,.1);
+  backdrop-filter:blur(8px)
+}
+.event-label b{display:block;font-size:12px;margin-bottom:2px}
+.event-label span{color:#93a0b6;font-size:10px}
+.event-label-line{position:absolute;width:1px;background:linear-gradient(#8db5ff,transparent);pointer-events:none;opacity:.7}
+
+
+.period-watermark{
+  position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;
+  font-weight:900;letter-spacing:.04em;color:rgba(160,185,255,.055);
+  text-align:center;z-index:0;user-select:none
+}
+.period-watermark.year{font-size:clamp(76px,16vw,190px)}
+.period-watermark.date{font-size:clamp(42px,9vw,96px);line-height:1.05}
+.period-watermark.date small{display:block;font-size:.42em;letter-spacing:.08em;margin-top:6px}
+#dna{position:relative;z-index:1}
+#eventLabels{position:absolute;inset:0;z-index:2;pointer-events:none}
+.zoom-badge{z-index:4}
+
+
+
+.timeline-filterbar{
+ display:flex;gap:7px;overflow-x:auto;padding:2px 2px 10px;scrollbar-width:none
+}
+.timeline-filterbar::-webkit-scrollbar{display:none}
+.filter-chip{
+ flex:0 0 auto;border:1px solid rgba(255,255,255,.08);background:#0d1627;color:#8290a7;
+ border-radius:999px;padding:7px 11px;font:700 11px system-ui
+}
+.filter-chip.active{
+ color:#eaf1ff;border-color:rgba(123,105,255,.5);
+ background:linear-gradient(135deg,rgba(92,73,213,.35),rgba(32,92,143,.28));
+ box-shadow:0 0 18px rgba(92,73,213,.12)
+}
+
+.plan-label{opacity:.46!important;border-style:dashed!important;filter:saturate(.8)}
+.plan-label b{font-weight:700}
+.planner-app{max-width:880px;margin:0 auto}
+.planner-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.planner-head h2{margin:3px 0 0}
+.planner-plus{
+  width:48px;height:48px;border-radius:50%;border:0;background:#7c5cff;color:white;
+  font-size:28px;box-shadow:0 10px 30px rgba(124,92,255,.28)
+}
+.planner-quick{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.plan-filter{
+  border:1px solid rgba(255,255,255,.07);background:linear-gradient(145deg,#111a2d,#0b1322);
+  color:#b8c3d6;border-radius:18px;padding:13px;text-align:left
+}
+.plan-filter b{display:block;font-size:25px;color:white}.plan-filter span{font-size:11px}
+.plan-filter.active{border-color:#7c5cff;box-shadow:inset 0 0 0 1px rgba(124,92,255,.22)}
+.planner-addline{display:grid;grid-template-columns:1fr 44px;gap:8px;margin:14px 0}
+.planner-addline input{
+  border:1px solid rgba(255,255,255,.08);background:#0d1525;color:white;border-radius:16px;
+  padding:13px 14px;font:inherit;outline:none
+}
+.planner-addline button{border:0;border-radius:14px;background:#222d43;color:#bda7ff;font-size:24px}
+.planner-section-title{font-size:12px;color:#8592a8;margin:18px 4px 8px;text-transform:uppercase;letter-spacing:.08em}
+.plan-card{
+  display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:start;
+  padding:13px 12px;margin-bottom:8px;border-radius:18px;
+  background:linear-gradient(145deg,#111a2d,#0b1322);border:1px solid rgba(255,255,255,.06)
+}
+.plan-check{
+  width:26px;height:26px;border-radius:50%;border:2px solid #7c5cff;background:transparent;color:white;
+  display:grid;place-items:center;font-size:15px
+}
+.plan-card.done{opacity:.5}.plan-card.done .plan-title{text-decoration:line-through}
+.plan-title{font-weight:750;margin-bottom:5px}
+.plan-meta{font-size:11px;color:#9ba7bb;display:flex;gap:7px;flex-wrap:wrap}
+.plan-pill{border-radius:999px;padding:3px 7px;background:#121f36;border:1px solid rgba(255,255,255,.06)}
+.plan-more{border:0;background:none;color:#8795aa;font-size:22px;padding:0 3px}
+@media(max-width:760px){
+ .planner-quick{grid-template-columns:repeat(3,1fr)}
+ .planner-app{padding:0 2px}
+}
+
+@media(max-width:520px){.canvas-wrap{height:285px}.balance{font-size:30px}h1{font-size:28px}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div><div class="brand">Нити</div><div class="sub">Live Lab • ДНК жизни</div></div>
+  <div class="sub" id="stamp">v20</div>
+</header>
+
+<main>
+
+<section id="home" class="screen active">
+  <div class="life-dashboard">
+    <aside class="life-sidebar">
+      <div class="side-title">МОИ НИТИ</div>
+      <button class="side-item active" type="button"><span>⌁</span>Главная</button>
+      <div id="sideThreads"></div>
+      <button class="side-add" type="button" id="sideAddThread">＋ Добавить нить</button>
+
+      <div class="side-progress-card">
+        <div class="meta">ТОЛЩИНА ГЛАВНОЙ НИТИ</div>
+        <div class="side-progress-value">78%</div>
+        <div class="meta">опыта накоплено</div>
+        <canvas id="sideProgressChart"></canvas>
+      </div>
+    </aside>
+
+    <section class="life-center">
+      <div class="life-tabs">
+        <button class="active" type="button">Линия</button>
+        <button type="button" data-open="eventsScreen">События</button>
+        <button type="button" data-open="planningScreen">Планирование</button>
+        <button type="button">Аналитика</button>
+      </div>
+
+      <div class="life-head">
+        <div>
+          <div class="life-title">МОЯ ЖИЗНЬ ✎</div>
+          <div class="meta">С рождения до сегодня</div>
+        </div>
+        <div class="life-today">
+          <div>Сегодня</div>
+          <div id="todayDateLabel"></div>
+        </div>
+      </div>
+
+      <div class="dna-wide-card">
+        <div class="timeline-filterbar" id="timelineFilters">
+          <button type="button" class="filter-chip active" data-filter="threads">Нити</button>
+          <button type="button" class="filter-chip active" data-filter="events">События</button>
+          <button type="button" class="filter-chip active" data-filter="plans">Планы</button>
+          <button type="button" class="filter-chip active" data-filter="finance">Финансы</button>
+          <button type="button" class="filter-chip active" data-filter="activity">Активность</button>
+        </div>
+        <div class="dna-wide-wrap" id="canvasWrap">
+          <div id="periodWatermark" class="period-watermark"></div>
+          <canvas id="dna"></canvas>
+          <div id="eventLabels"></div>
+          <div class="zoom-badge" id="zoomBadge">100%</div>
+        </div>
+        <div class="hint">Два пальца — увеличить/уменьшить • один палец — сдвинуть</div>
+      </div>
+
+      <div class="life-bottom-grid">
+        <div class="life-info-card">
+          <div class="info-title">ВЛИЯНИЕ НА НИТИ</div>
+          <div class="impact-grid" id="impactGrid">
+            <div class="impact-mini"><div class="impact-dot purple"></div><div>Учёба</div><b>+24%</b></div>
+            <div class="impact-mini"><div class="impact-dot blue"></div><div>Личностный рост</div><b>+18%</b></div>
+            <div class="impact-mini"><div class="impact-dot orange"></div><div>Отношения</div><b>+8%</b></div>
+          </div>
+        </div>
+        <div class="life-info-card node-card">
+          <div class="info-title">УЗЕЛ НА ДНК</div>
+          <div class="meta">События усиливают связь между нитями</div>
+          <div class="mini-node"></div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="event-preview">
+      <div class="event-preview-head">
+        <button class="preview-back" type="button">‹</button>
+        <div>Событие</div>
+        <div>⋮</div>
+      </div>
+
+      <div id="eventPreviewContent">
+        <div class="preview-empty">
+          <div class="preview-node"></div>
+          <h3>Выбери событие</h3>
+          <p>Нажми на узел на линии или открой вкладку «События».</p>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="mobile-home-tools">
+    <div class="actions">
+      <button class="btn" id="activityBtn">+ Активность</button>
+      <button class="btn alt" id="threadBtn">+ Нить</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="todaySteps">0</b><span>шагов сегодня</span></div>
+      <div class="stat"><b id="lifeSteps">0</b><span>шагов записано</span></div>
+      <div class="stat"><b id="trainingTime">0 мин</b><span id="trainingSub">тренировки</span></div>
+    </div>
+    <div id="threads" style="display:none"></div>
+  </div>
+</section>
+
+
+<section id="eventsScreen" class="screen">
+  <div class="section-head">
+    <div><div class="eyebrow">Хронология</div><h2>События</h2></div>
+    <button class="btn" id="addEventBtn">+ Событие</button>
+  </div>
+  <div id="eventsList"></div>
+</section>
+
+
+<section id="planningScreen" class="screen">
+  <div class="planner-app">
+    <div class="planner-head">
+      <div>
+        <div class="eyebrow">Планы и напоминания</div>
+        <h2>Планирование</h2>
+      </div>
+      <button class="planner-plus" id="addPlanBtn" type="button">＋</button>
+    </div>
+
+    <div class="planner-quick">
+      <button type="button" class="plan-filter active" data-plan-filter="upcoming">
+        <b id="planUpcomingCount">0</b><span>Предстоящие</span>
+      </button>
+      <button type="button" class="plan-filter" data-plan-filter="today">
+        <b id="planTodayCount">0</b><span>Сегодня</span>
+      </button>
+      <button type="button" class="plan-filter" data-plan-filter="done">
+        <b id="planDoneCount">0</b><span>Выполнено</span>
+      </button>
+    </div>
+
+    <div class="planner-addline">
+      <input id="quickPlanInput" type="text" placeholder="Быстро добавить напоминание">
+      <button id="quickPlanBtn" type="button">＋</button>
+    </div>
+
+    <div class="planner-section-title" id="plannerSectionTitle">Предстоящие</div>
+    <div id="plansList"></div>
+  </div>
+</section>
+
+<section id="peopleScreen" class="screen">
+  <div class="section-head">
+    <div><div class="eyebrow">Связи</div><h2>Люди</h2></div>
+    <button class="btn" id="addPersonBtn">+ Человек</button>
+  </div>
+  <div id="peopleList"></div>
+</section>
+
+
+<section id="financeScreen" class="screen">
+  <div class="finance-app">
+    <div class="fin-top">
+      <div class="fin-top-row">
+        <button class="fin-menu" type="button">☰</button>
+        <div class="fin-total-wrap">
+          <div class="fin-caption">💰 Итого ▾</div>
+          <div class="fin-total" id="finTotal">₺0</div>
+        </div>
+        <button class="fin-menu" type="button">▤</button>
+      </div>
+
+      <div class="fin-main-tabs">
+        <button type="button" class="fin-main-tab active" data-fin-mode="expense">РАСХОДЫ</button>
+        <button type="button" class="fin-main-tab" data-fin-mode="income">ДОХОДЫ</button>
+      </div>
+    </div>
+
+    <div class="fin-panel">
+      <div class="fin-period-tabs">
+        <button type="button" data-period="day">День</button>
+        <button type="button" data-period="week">Неделя</button>
+        <button type="button" class="active" data-period="month">Месяц</button>
+        <button type="button" data-period="year">Год</button>
+        <button type="button" data-period="all">Период</button>
+      </div>
+
+      <div class="fin-month-row">
+        <button type="button" class="fin-arrow" id="finPrev">‹</button>
+        <button type="button" class="fin-month-title" id="finPeriodTitle">Август 2026</button>
+        <button type="button" class="fin-arrow" id="finNext">›</button>
+      </div>
+
+      <div class="fin-chart-wrap">
+        <div class="fin-donut" id="finDonut">
+          <div class="fin-donut-hole">
+            <div class="fin-donut-total" id="finDonutTotal">₺0</div>
+          </div>
+        </div>
+        <button class="fin-plus" type="button" id="addMoneyBtn">+</button>
+      </div>
+    </div>
+
+    <div id="finCategoryList" class="fin-category-list"></div>
+  </div>
+</section>
+
+
+<section id="transactionScreen" class="screen">
+  <div class="tx-page">
+    <div class="tx-header">
+      <button type="button" class="tx-back" id="txBack">‹</button>
+      <div class="tx-title">Добавление операции</div>
+    </div>
+
+    <div class="tx-tabs">
+      <button type="button" class="tx-tab active" data-type="expense">РАСХОДЫ</button>
+      <button type="button" class="tx-tab" data-type="income">ДОХОДЫ</button>
+    </div>
+
+    <div class="tx-body">
+      <div class="tx-amount-row">
+        <input id="txAmount" inputmode="decimal" type="number" value="0" min="0" step="0.01">
+        <div class="tx-currency">TRY</div>
+        <div class="tx-calc">▦</div>
+      </div>
+
+      <div class="tx-block-label">Счет</div>
+      <button type="button" class="tx-account" id="txAccount">Не задан</button>
+
+      <div class="tx-block-label">Категории</div>
+      <div class="tx-category-grid" id="txCategoryGrid"></div>
+
+      <div class="tx-date-row">
+        <button type="button" class="tx-date-choice active" data-offset="0"><b id="txTodayLabel">31.08</b><span>сегодня</span></button>
+        <button type="button" class="tx-date-choice" data-offset="-1"><b id="txYesterdayLabel">30.08</b><span>вчера</span></button>
+        <button type="button" class="tx-date-choice" data-offset="-2"><b id="txBeforeLabel">29.08</b><span>последняя</span></button>
+        <button type="button" class="tx-calendar" id="txCalendar">▦</button>
+      </div>
+
+      <div class="tx-block-label tx-tags-head">Теги <span>⌕</span></div>
+      <div class="tx-tags" id="txTags">
+        <button type="button">Ritulichka</button>
+        <button type="button">В Aleksandr Ivanovic</button>
+        <button type="button">В biz vladimir</button>
+        <button type="button">В IGOR Aslanbucak</button>
+        <button type="button">Kozlov</button>
+        <button type="button">Caretta Igor</button>
+        <button type="button">Denis</button>
+      </div>
+
+      <label class="tx-comment-wrap">
+        <span>Комментарий</span>
+        <input id="txComment" type="text" placeholder="Добавить комментарий">
+      </label>
+
+      <button type="button" class="tx-save" id="txSave">Добавить</button>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<nav class="nav" id="nav">
+  <button type="button" class="active" data-screen="home"><i>⌁</i>Линия</button>
+  <button type="button" data-screen="eventsScreen"><i>◉</i>События</button>
+  <button type="button" data-screen="planningScreen"><i>✓</i>Планы</button>
+  <button type="button" data-screen="peopleScreen"><i>♧</i>Люди</button>
+  <button type="button" data-screen="financeScreen"><i>₽</i>Финансы</button>
+</nav>
+
+<dialog id="dlg">
+<form method="dialog" id="form">
+  <h3 id="dlgTitle"></h3>
+  <div id="fields"></div>
+  <div class="dlg-actions">
+    <button class="mutebtn" value="cancel" type="button" id="cancelDlg">Отмена</button>
+    <button class="btn" type="submit">Сохранить</button>
+  </div>
+</form>
+</dialog>
+
+<script>
+"use strict";
+const KEY="niti-live-lab";
+const LEGACY_KEYS=[
+ "niti-live-lab-v14","niti-live-lab-v13","niti-live-lab-v12","niti-live-lab-v11",
+ "niti-live-lab-v10","niti-live-lab-v9","niti-live-lab-v8","niti-live-lab-v6",
+ "niti-live-lab-v5","niti-live-lab-v4","niti-live-lab-v3","niti-live-lab-v2","niti-live-lab-v1"
+];
+const base={
+ profile:{firstName:"",middleName:"",lastName:"",name:"Я",birthDate:""},
+ threads:[{id:"birth",name:"Рождение",category:"Чувства",startDate:"",color:"#9d74ff",locked:true}],
+ events:[],plans:[],people:[],money:[],activity:[],viewFilters:{threads:true,events:true,plans:true,finance:true,activity:true}
+};
+const clone=x=>JSON.parse(JSON.stringify(x));
+let s=clone(base);
+try{
+ let raw=localStorage.getItem(KEY);
+ if(!raw){
+   for(const oldKey of LEGACY_KEYS){
+     const candidate=localStorage.getItem(oldKey);
+     if(candidate){ raw=candidate; break; }
+   }
+ }
+ const loaded=raw?JSON.parse(raw):{};
+ s={...s,...loaded,profile:{...base.profile,...(loaded.profile||{})},viewFilters:{...base.viewFilters,...(loaded.viewFilters||{})}};
+ if(s.profile.name && !s.profile.firstName && s.profile.name!=="Я") s.profile.firstName=s.profile.name;
+ for(const k of ["threads","events","plans","people","money","activity"]) if(!Array.isArray(s[k])) s[k]=[];
+ localStorage.setItem(KEY,JSON.stringify(s));
+}catch(e){}
+
+const $=id=>document.getElementById(id);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const today=()=>new Date().toISOString().slice(0,10);
+const esc=t=>String(t??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+function toDisplayDate(iso){
+ if(!iso)return "";
+ const m=String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+ return m?`${m[3]}.${m[2]}.${m[1]}`:iso;
+}
+function parseDateInput(v){
+ v=String(v||"").trim();
+ let m=v.match(/^(\d{1,2})[.\-\/](\d{1,2})[.\-\/](\d{4})$/);
+ if(m){
+   const d=String(+m[1]).padStart(2,"0"), mo=String(+m[2]).padStart(2,"0"), y=m[3];
+   return `${y}-${mo}-${d}`;
+ }
+ m=v.match(/^(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})$/);
+ if(m){
+   const y=m[1],mo=String(+m[2]).padStart(2,"0"),d=String(+m[3]).padStart(2,"0");
+   return `${y}-${mo}-${d}`;
+ }
+ return "";
+}
+
+const save=()=>{localStorage.setItem(KEY,JSON.stringify(s));render()};
+
+function switchScreen(id){
+ document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));
+ const target=$(id);
+ if(target) target.classList.add("active");
+ document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("active",b.dataset.screen===id));
+ window.scrollTo(0,0);
+ if(id==="home") requestAnimationFrame(drawDNA);
+}
+document.querySelectorAll("#nav button").forEach(btn=>{
+ btn.addEventListener("click",()=>switchScreen(btn.dataset.screen));
+});
+
+function modal(title,fields,onSave){
+ const dlg=$("dlg"), form=$("form"), wrap=$("fields");
+ $("dlgTitle").textContent=title;
+ wrap.innerHTML="";
+ fields.forEach(f=>{
+   const d=document.createElement("div"); d.className="field";
+   const l=document.createElement("label"); l.textContent=f.label;
+   let i;
+   if(f.type==="select"){
+     i=document.createElement("select");
+     (f.options||[]).forEach(o=>{const op=document.createElement("option");op.value=o.v;op.textContent=o.t;i.appendChild(op)});
+     i.name=f.k; i.value=f.value??"";
+     d.append(l,i);
+   }else if(f.type==="date"){
+     i=document.createElement("input");
+     i.type="text"; i.inputMode="numeric"; i.placeholder="например 25.06.1984";
+     i.name=f.k; i.value=toDisplayDate(f.value||"");
+     const note=document.createElement("div");note.className="field-note";note.textContent="Можно сразу набрать дату: ДД.ММ.ГГГГ";
+     d.append(l,i,note);
+   }else{
+     i=document.createElement("input"); i.type=f.type||"text";
+     i.name=f.k; i.value=f.value??"";
+     if(f.type==="color"){
+       i.className="color-preview";
+       i.addEventListener("input",()=>{i.style.boxShadow=`0 0 22px ${i.value}55`});
+     }
+     d.append(l,i);
+   }
+   wrap.appendChild(d);
+ });
+ const submit=e=>{
+   e.preventDefault();
+   const fd=new FormData(form), v={};
+   for(const [k,val] of fd.entries()) v[k]=val;
+   for(const f of fields){
+     if(f.type==="date"){
+       const parsed=parseDateInput(v[f.k]);
+       if(!parsed){alert("Проверь дату. Введи её, например: 25.06.1984");return}
+       v[f.k]=parsed;
+     }
+   }
+   form.removeEventListener("submit",submit);
+   dlg.close();
+   onSave(v);
+ };
+ form.addEventListener("submit",submit);
+ $("cancelDlg").onclick=()=>{form.removeEventListener("submit",submit);dlg.close()};
+ dlg.showModal();
+}
+
+let zoom=1, panX=0;
+const MIN_ZOOM=1, MAX_ZOOM=200000;
+function clampPan(viewW){
+ const contentW=viewW*zoom;
+ const maxPan=Math.max(0,(contentW-viewW)/2);
+ panX=Math.max(-maxPan,Math.min(maxPan,panX));
+}
+function yearLabel(ms){return new Date(ms).getFullYear()}
+
+function drawDNA(){
+ const cv=$("dna"), wrap=$("canvasWrap");
+ if(!cv||!wrap)return;
+ const rect=wrap.getBoundingClientRect(), dpr=Math.max(1,devicePixelRatio||1);
+ cv.width=Math.round(rect.width*dpr); cv.height=Math.round(rect.height*dpr);
+ cv.style.width=rect.width+"px";cv.style.height=rect.height+"px";
+ const c=cv.getContext("2d"); c.setTransform(dpr,0,0,dpr,0,0);
+ const w=rect.width,h=rect.height; c.clearRect(0,0,w,h);
+
+ const birthMs=s.profile.birthDate?new Date(s.profile.birthDate+"T00:00:00").getTime():new Date("1984-01-01").getTime();
+ const nowMs=Date.now();
+ const latestPlanMs=s.plans.reduce((m,p)=>{
+   if(!p.date)return m;
+   const ms=new Date(p.date+"T"+(p.time||"23:59")+":00").getTime();
+   return Number.isFinite(ms)?Math.max(m,ms):m;
+ },nowMs);
+ const endMs=Math.max(nowMs,latestPlanMs);
+ const life=Math.max(1,endMs-birthMs);
+ const pad=28, centerY=h/2, amp=Math.min(54,h*.23), turns=6.2;
+ clampPan(w);
+
+ const contentW=(w-pad*2)*zoom;
+ const left=pad - (contentW-(w-pad*2))/2 + panX;
+ const xForMs=ms=>left+((ms-birthMs)/life)*contentW;
+ const visible=(x,r=20)=>x>-r&&x<w+r;
+
+ // timeline baseline
+ c.strokeStyle="rgba(255,255,255,.08)";c.lineWidth=1;
+ c.beginPath();c.moveTo(0,centerY);c.lineTo(w,centerY);c.stroke();
+
+ // adaptive timeline ticks: years -> months -> days -> 10-minute time scale
+ const visibleStartMs=birthMs + Math.max(0,((-left)/contentW))*life;
+ const visibleEndMs=birthMs + Math.min(1,((w-left)/contentW))*life;
+ const visibleSpanMs=Math.max(1,visibleEndMs-visibleStartMs);
+
+ let lastLabelX=-Infinity;
+ function tick(ms,label,strong=false,minor=false,minLabelPx=54){
+   const x=xForMs(ms); if(!visible(x))return;
+   const yTop=minor ? h-34 : 18;
+   c.strokeStyle=minor?"rgba(185,205,255,.11)":(strong?"rgba(210,225,255,.22)":"rgba(185,205,255,.14)");
+   c.lineWidth=1;
+   c.beginPath();c.moveTo(x,yTop);c.lineTo(x,h-22);c.stroke();
+
+   if(label && x-lastLabelX>=minLabelPx){
+     c.fillStyle=strong?"#d0dbef":"#93a3bd";
+     c.font=strong?"11px system-ui":"10px system-ui";
+     c.textAlign="center";
+     c.fillText(label,x,h-8);
+     lastLabelX=x;
+   }
+ }
+
+ // large background context label
+ const wm=$("periodWatermark");
+ if(wm){
+   wm.className="period-watermark";
+   wm.innerHTML="";
+ }
+
+ const H=3600000,D=86400000,MIN=60000;
+ const midMs=(visibleStartMs+visibleEndMs)/2;
+ const midDate=new Date(midMs);
+
+ if(visibleSpanMs > 5*365.25*D){
+   const by=new Date(visibleStartMs).getFullYear()-1, ey=new Date(visibleEndMs).getFullYear()+1;
+   const yearsVisible=visibleSpanMs/(365.25*D);
+   let stepY=10;if(yearsVisible<25)stepY=5;if(yearsVisible<12)stepY=2;if(yearsVisible<7)stepY=1;
+   for(let y=Math.ceil(by/stepY)*stepY;y<=ey;y+=stepY)tick(new Date(y,0,1).getTime(),String(y),true);
+
+ }else if(visibleSpanMs > 2*D){
+   // Month / multi-day scale: show the current year softly in the background.
+   if(wm){
+     wm.classList.add("year");
+     wm.textContent=String(midDate.getFullYear());
+   }
+
+   if(visibleSpanMs > 120*D){
+     let d=new Date(visibleStartMs);d=new Date(d.getFullYear(),d.getMonth(),1);
+     const months=["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
+     const approxMonths=Math.max(1,visibleSpanMs/(30.44*D));
+     const pxPerMonth=w/approxMonths;
+     const stepM=pxPerMonth<55?3:pxPerMonth<90?2:1;
+     let idx=0;
+     for(;d.getTime()<=visibleEndMs+35*D;d=new Date(d.getFullYear(),d.getMonth()+1,1),idx++){
+       const label=idx%stepM===0?months[d.getMonth()]:"";
+       tick(d.getTime(),label,true,false,58);
+     }
+   }else{
+     let d=new Date(visibleStartMs);d.setHours(0,0,0,0);
+     const daysVisible=Math.max(1,visibleSpanMs/D);
+     const pxPerDay=w/daysVisible;
+     // Keep a daily grid, but label only at a readable cadence.
+     let labelEvery=1;
+     if(pxPerDay<44)labelEvery=7;
+     else if(pxPerDay<62)labelEvery=3;
+     else if(pxPerDay<82)labelEvery=2;
+     let idx=0;
+     for(;d.getTime()<=visibleEndMs+D;d.setDate(d.getDate()+1),idx++){
+       const label=idx%labelEvery===0
+         ? String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")
+         : "";
+       tick(d.getTime(),label,idx%labelEvery===0,false,54);
+     }
+   }
+
+ }else{
+   // Day scale: background shows exact date + year.
+   if(wm){
+     wm.classList.add("date");
+     wm.innerHTML=midDate.toLocaleDateString("ru-RU",{day:"2-digit",month:"long"})+
+       "<small>"+midDate.getFullYear()+"</small>";
+   }
+
+   // Time grid changes with zoom: 1 hour -> 30 min -> 10 min.
+   let d=new Date(visibleStartMs);
+   d.setSeconds(0,0);
+
+   const hoursVisible=Math.max(0.01,visibleSpanMs/H);
+   let stepMinutes=60;
+   let labelMinutes=60;
+
+   if(hoursVisible<=36){ stepMinutes=30; labelMinutes=60; }
+   if(hoursVisible<=18){ stepMinutes=30; labelMinutes=30; }
+   if(hoursVisible<=8){ stepMinutes=10; labelMinutes=30; }
+   if(hoursVisible<=3){ stepMinutes=10; labelMinutes=10; }
+
+   d.setMinutes(Math.floor(d.getMinutes()/stepMinutes)*stepMinutes);
+
+   const maxTicks=1800;
+   let count=0;
+   for(;d.getTime()<=visibleEndMs+stepMinutes*MIN && count<maxTicks;d=new Date(d.getTime()+stepMinutes*MIN),count++){
+     const mins=d.getMinutes();
+     const totalMins=d.getHours()*60+mins;
+     const isHour=mins===0;
+     const showLabel=(totalMins%labelMinutes)===0;
+
+     const label=showLabel
+       ? String(d.getHours()).padStart(2,"0")+":"+String(mins).padStart(2,"0")
+       : "";
+
+     const minor=stepMinutes<60 && !isHour;
+     tick(d.getTime(),label,isHour,minor,56);
+   }
+ }
+
+ function helix(phase,color,color2){
+   const samples=Math.max(420,Math.floor(Math.min(contentW,5000)/2));
+   const pts=[];
+   for(let i=0;i<=samples;i++){
+     const t=i/samples, x=left+t*contentW;
+     if(x<-60||x>w+60)continue;
+     const y=centerY+Math.sin(t*Math.PI*2*turns+phase)*amp;
+     pts.push([x,y,t]);
+   }
+   function stroke(width,alpha,blur,col){
+     if(!pts.length)return;
+     c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));
+     c.globalAlpha=alpha;c.strokeStyle=col;c.lineWidth=width;c.lineCap="round";
+     c.shadowColor=col;c.shadowBlur=blur;c.stroke();c.shadowBlur=0;c.globalAlpha=1;
+   }
+   stroke(12,.08,26,color);
+   stroke(7,.18,18,color);
+   stroke(4.3,1,12,color);
+   // bright highlight on top of the strand
+   stroke(1.25,.9,6,color2||"#dce7ff");
+ }
+ helix(0,"#4db9ff","#d7f4ff");
+ helix(Math.PI,"#a260ff","#f2ddff");
+
+ // subtle particles around the helix
+ c.save();
+ for(let i=0;i<90;i++){
+   const t=i/89, x=left+t*contentW;
+   if(x<-20||x>w+20)continue;
+   const y=centerY+Math.sin(t*31.7)*amp*1.35;
+   const yy=y+Math.cos(t*53.1)*18;
+   c.beginPath();c.arc(x,yy,(i%7===0?1.4:.7),0,Math.PI*2);
+   c.fillStyle=i%3===0?"rgba(115,89,255,.65)":i%3===1?"rgba(55,197,255,.55)":"rgba(255,164,56,.45)";
+   c.fill();
+ }
+ c.restore();
+
+ // cross links
+ for(let i=0;i<=60;i++){
+   const t=i/60,x=left+t*contentW;if(!visible(x))continue;
+   const y1=centerY+Math.sin(t*Math.PI*2*turns)*amp;
+   const y2=centerY+Math.sin(t*Math.PI*2*turns+Math.PI)*amp;
+   const g=c.createLinearGradient(x,y1,x,y2);g.addColorStop(0,"rgba(162,108,255,.5)");g.addColorStop(.5,"rgba(79,184,255,.35)");g.addColorStop(1,"rgba(255,157,44,.45)");
+   c.strokeStyle=g;c.lineWidth=1.3;c.beginPath();c.moveTo(x,y1);c.lineTo(x,y2);c.stroke();
+   c.beginPath();c.arc(x,(y1+y2)/2,1.7,0,Math.PI*2);c.fillStyle="rgba(220,235,255,.85)";c.shadowColor="#8cc9ff";c.shadowBlur=7;c.fill();c.shadowBlur=0;
+ }
+
+ // thematic threads start from their date and weave forward
+ if(s.viewFilters.threads) s.threads.filter(t=>t.id!=="birth").forEach((th,idx)=>{
+   const startMs=new Date((th.startDate||today())+"T12:00:00").getTime();
+   const startT=Math.max(0,Math.min(1,(startMs-birthMs)/life));
+   c.beginPath();let started=false;
+   const samples=220;
+   for(let j=0;j<=samples;j++){
+     const t=startT+(1-startT)*(j/samples),x=left+t*contentW;
+     if(x<-30||x>w+30)continue;
+     const y=centerY+Math.sin(t*Math.PI*2*turns+idx*.8)*amp*(.72+idx*.03);
+     if(!started){c.moveTo(x,y);started=true}else c.lineTo(x,y);
+   }
+   if(started){c.strokeStyle=th.color||"#62d79a";c.lineWidth=2.5;c.globalAlpha=.8;c.stroke();c.globalAlpha=1}
+ });
+
+
+ // ECG-style data threads: activity and finance.
+ function drawCardio(items,color,yBase,amplitude,valueFn){
+   if(!items.length)return;
+   const sorted=items.filter(x=>x.date).slice().sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+   if(!sorted.length)return;
+
+   // quiet baseline
+   c.save();
+   c.strokeStyle=color;c.globalAlpha=.20;c.lineWidth=1.2;
+   c.beginPath();c.moveTo(0,yBase);c.lineTo(w,yBase);c.stroke();
+
+   sorted.forEach((item,idx)=>{
+     const ms=new Date(item.date+"T"+(item.time||"12:00")+":00").getTime();
+     const x=xForMs(ms); if(!visible(x,45))return;
+     const raw=Math.max(0,Number(valueFn(item))||0);
+     const strength=Math.max(.45,Math.min(1.45,.45+Math.log10(raw+1)*.23));
+     const a=amplitude*strength;
+     const ww=20;
+     c.globalAlpha=.86;
+     c.strokeStyle=color;c.lineWidth=2;c.lineJoin="round";c.lineCap="round";
+     c.shadowColor=color;c.shadowBlur=8;
+     c.beginPath();
+     c.moveTo(x-ww,yBase);
+     c.lineTo(x-ww*.52,yBase);
+     c.lineTo(x-ww*.28,yBase-a*.15);
+     c.lineTo(x-ww*.08,yBase+a*.18);
+     c.lineTo(x+ww*.08,yBase-a);
+     c.lineTo(x+ww*.24,yBase+a*.48);
+     c.lineTo(x+ww*.42,yBase-a*.18);
+     c.lineTo(x+ww*.62,yBase);
+     c.lineTo(x+ww,yBase);
+     c.stroke();
+     c.shadowBlur=0;
+   });
+   c.restore();
+ }
+
+ if(s.viewFilters.activity){
+   drawCardio(
+     s.activity,
+     "#39c8ff",
+     Math.max(30,centerY-amp-25),
+     18,
+     x=>(+x.steps||0)+(+x.minutes||0)*80+(+x.km||0)*400
+   );
+ }
+ if(s.viewFilters.finance){
+   drawCardio(
+     s.money,
+     "#63e6a5",
+     Math.min(h-45,centerY+amp+25),
+     18,
+     x=>Math.abs(+x.amount||0)
+   );
+ }
+
+ // nodes: birth + events
+ const nodes=[
+   {date:s.profile.birthDate||"1984-01-01",color:"#9d74ff",size:8,title:"Рождение"},
+   ...(s.viewFilters.events?s.events:[]).map(e=>({date:e.date,color:e.color||"#7aa7ff",size:7,title:e.title||"Событие"}))
+ ];
+ nodes.forEach(n=>{
+   const ms=new Date((n.date||today())+"T12:00:00").getTime(),t=Math.max(0,Math.min(1,(ms-birthMs)/life)),x=left+t*contentW;
+   if(!visible(x))return;
+   const y=centerY+Math.sin(t*Math.PI*2*turns)*amp;
+   c.beginPath();c.arc(x,y,n.size+4,0,Math.PI*2);c.fillStyle="rgba(255,255,255,.035)";c.fill();
+   c.beginPath();c.arc(x,y,n.size,0,Math.PI*2);c.fillStyle=n.color;c.shadowColor=n.color;c.shadowBlur=24;c.fill();c.shadowBlur=0;
+   c.beginPath();c.arc(x,y,2.2,0,Math.PI*2);c.fillStyle="#ffffff";c.fill();
+ });
+
+ 
+ // event and plan names on the timeline scale
+ const labelBox=$("eventLabels");
+ if(labelBox){
+   labelBox.innerHTML="";
+   const visibleYears=visibleSpanMs/(365.25*D);
+   const showLabels=zoom>=1.35 || visibleYears<20;
+
+   function addScaleLabel(item,isPlan=false,idx=0){
+     if(!item.date)return;
+     const ms=new Date(item.date+"T"+(item.time||"12:00")+":00").getTime();
+     const x=xForMs(ms);
+     if(!visible(x))return;
+
+     const el=document.createElement("div");
+     el.className="event-label"+(isPlan?" plan-label":"");
+     const d=new Date(ms);
+     const dateTxt=d.toLocaleDateString("ru-RU",{day:"2-digit",month:"2-digit",year:"numeric"});
+     const timeTxt=item.time?(" • "+item.time):"";
+     el.innerHTML=`<b>${esc(item.title||(isPlan?"План":"Событие"))}</b><span>${dateTxt}${timeTxt}</span>`;
+     el.style.left=x+"px";
+     // Keep labels close to the time scale; alternate rows slightly.
+     el.style.top=(h-34-(idx%2)*34)+"px";
+     labelBox.appendChild(el);
+
+     const ln=document.createElement("div");
+     ln.className="event-label-line";
+     ln.style.left=x+"px";
+     ln.style.top=(h-72-(idx%2)*34)+"px";
+     ln.style.height=(38+(idx%2)*34)+"px";
+     if(isPlan)ln.style.opacity=".28";
+     labelBox.appendChild(ln);
+   }
+
+   if(showLabels){
+     if(s.viewFilters.events) s.events.forEach((e,idx)=>addScaleLabel(e,false,idx));
+     if(s.viewFilters.plans) s.plans.filter(p=>!p.done).forEach((p,idx)=>addScaleLabel(p,true,idx+(s.viewFilters.events?s.events.length:0)));
+   }
+ }
+
+ // labels birth/today when visible
+ const xb=xForMs(birthMs), xn=xForMs(nowMs);
+ c.font="12px system-ui";c.fillStyle="#9ba7bb";
+ if(visible(xb)){c.textAlign="left";c.fillText("Рождение",Math.max(8,xb+6),18)}
+ if(visible(xn)){c.textAlign="right";c.fillText("Сегодня",Math.min(w-8,xn-6),18)}
+ let scaleText=Math.round(zoom*100)+"%";
+ const visibleSpanYears=(nowMs-birthMs)/31557600000/zoom;
+ const visibleSpanDays=visibleSpanYears*365.25;
+ const visibleSpanHours=visibleSpanDays*24;
+ if(visibleSpanHours<=3) scaleText="Часы • 10 мин";
+ else if(visibleSpanHours<=18) scaleText="Часы • 30 мин";
+ else if(visibleSpanDays<=2) scaleText="Часы • 1 час";
+ else if(visibleSpanDays<60) scaleText="Дни";
+ else if(visibleSpanYears<1.5) scaleText="Месяцы";
+ else if(visibleSpanYears<5) scaleText="Годы";
+ $("zoomBadge").textContent=scaleText;
+}
+
+// Smooth pinch zoom + one-finger pan
+const pointers=new Map();
+let pinchLastDist=0,dragStartX=0,dragStartPan=0;
+const wrap=$("canvasWrap");
+
+wrap.addEventListener("pointerdown",e=>{
+ e.preventDefault();
+ wrap.setPointerCapture(e.pointerId);
+ pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(pointers.size===1){
+   dragStartX=e.clientX;
+   dragStartPan=panX;
+ }
+ if(pointers.size===2){
+   const a=[...pointers.values()];
+   pinchLastDist=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
+ }
+},{passive:false});
+
+wrap.addEventListener("pointermove",e=>{
+ if(!pointers.has(e.pointerId))return;
+ e.preventDefault();
+ pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+
+ if(pointers.size===2){
+   const a=[...pointers.values()];
+   const dist=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
+   if(pinchLastDist>0 && dist>0){
+     // Incremental ratio makes zoom follow fingers continuously instead of jumping on release.
+     const raw=dist/pinchLastDist;
+     const gentle=Math.pow(Math.max(.88,Math.min(1.12,raw)),.72);
+     zoom=Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,zoom*gentle));
+     pinchLastDist=dist;
+     drawDNA();
+   }
+ }else if(pointers.size===1){
+   panX=dragStartPan+(e.clientX-dragStartX)*.78;
+   drawDNA();
+ }
+},{passive:false});
+
+wrap.addEventListener("wheel",e=>{
+ e.preventDefault();
+ const factor=e.deltaY<0?1.10:1/1.10;
+ zoom=Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,zoom*factor));
+ drawDNA();
+},{passive:false});
+
+["pointerup","pointercancel"].forEach(type=>wrap.addEventListener(type,e=>{
+ e.preventDefault();
+ pointers.delete(e.pointerId);
+ if(pointers.size===1){
+   const a=[...pointers.values()][0];
+   dragStartX=a.x;
+   dragStartPan=panX;
+ }
+ if(pointers.size<2)pinchLastDist=0;
+ drawDNA();
+},{passive:false}));
+
+function fmtMinutes(m){m=Math.round(m||0);return m<60?m+" мин":Math.floor(m/60)+" ч "+(m%60?m%60+" мин":"")}
+function render(){
+ $("stamp").textContent="v20 • "+new Date().toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
+ const td=today();
+ const todaySteps=s.activity.filter(x=>x.date===td&&["walk","run"].includes(x.kind)).reduce((a,x)=>a+(+x.steps||0),0);
+ const lifeSteps=s.activity.filter(x=>["walk","run"].includes(x.kind)).reduce((a,x)=>a+(+x.steps||0),0);
+ const trainingMins=s.activity.filter(x=>["run","swim","bike","workout"].includes(x.kind)).reduce((a,x)=>a+(+x.minutes||0),0);
+ const bikeKm=s.activity.filter(x=>x.kind==="bike").reduce((a,x)=>a+(+x.km||0),0);
+ $("todaySteps").textContent=todaySteps.toLocaleString("ru-RU");
+ $("lifeSteps").textContent=lifeSteps.toLocaleString("ru-RU");
+ $("trainingTime").textContent=fmtMinutes(trainingMins);
+ $("trainingSub").textContent="велосипед "+bikeKm.toFixed(1)+" км";
+
+ $("threads").innerHTML=s.threads.map(t=>{
+   const col=t.color||"#62d79a";
+   return `<div class="card thread-card" style="--thread-color:${col};border-left:4px solid ${col}">
+     <div class="thread-main">
+       <span class="thread-node"></span>
+       <div><b>${esc(t.name)}</b><div class="meta">${esc(t.category||"Без категории")} • ${esc(t.startDate?toDisplayDate(t.startDate):"с рождения")}</div></div>
+       <div class="thread-actions">
+         ${t.locked?"":`<button class="icon-btn edit-thread" data-id="${t.id}" type="button">✎</button>`}
+       </div>
+     </div>
+   </div>`;
+ }).join("");
+ document.querySelectorAll(".edit-thread").forEach(b=>b.onclick=()=>editThread(b.dataset.id));
+ const side=$("sideThreads");
+ if(side){
+   side.innerHTML=s.threads.filter(t=>t.id!=="birth").map(t=>{
+     const col=t.color||"#62d79a";
+     return `<button class="side-item" type="button" data-thread-id="${t.id}">
+       <span class="dot" style="background:${col};color:${col}"></span>${esc(t.name)}
+     </button>`;
+   }).join("");
+ }
+ if($("todayDateLabel")) $("todayDateLabel").textContent=new Date().toLocaleDateString("ru-RU",{day:"2-digit",month:"short",year:"numeric"});
+ renderEventPreview();
+ drawSideProgress();
+ document.querySelectorAll("[data-filter]").forEach(b=>{
+   b.classList.toggle("active",!!s.viewFilters[b.dataset.filter]);
+ });
+
+
+ $("eventsList").innerHTML=s.events.length?s.events.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>`<div class="event-card"><b>${esc(e.title)}</b><div class="meta">${esc(e.date)} • ${esc(e.category||"Без категории")}</div>${e.note?`<div style="margin-top:7px">${esc(e.note)}</div>`:""}</div>`).join(""):`<div class="empty">Событий пока нет</div>`;
+ 
+ renderPlans();
+
+ $("peopleList").innerHTML=s.people.length?s.people.map(p=>`<div class="person-card"><div class="row"><div class="person-avatar">${esc((p.name||"?")[0].toUpperCase())}</div><div><b>${esc(p.name)}</b><div class="meta">${esc(p.relation||"Знакомый")}</div></div></div></div>`).join(""):`<div class="empty">Людей пока нет</div>`;
+
+ 
+ renderFinance();
+ requestAnimationFrame(drawDNA);
+}
+
+
+
+
+let planFilter="upcoming";
+
+function planDateTime(p){
+ const ms=new Date((p.date||today())+"T"+(p.time||"12:00")+":00").getTime();
+ return Number.isFinite(ms)?ms:0;
+}
+function renderPlans(){
+ const list=$("plansList"); if(!list)return;
+ const now=Date.now(), td=today();
+ const upcoming=s.plans.filter(p=>!p.done && planDateTime(p)>=now).length;
+ const todayCount=s.plans.filter(p=>!p.done && p.date===td).length;
+ const doneCount=s.plans.filter(p=>p.done).length;
+ $("planUpcomingCount").textContent=upcoming;
+ $("planTodayCount").textContent=todayCount;
+ $("planDoneCount").textContent=doneCount;
+
+ let arr=s.plans.slice();
+ if(planFilter==="today")arr=arr.filter(p=>!p.done&&p.date===td);
+ else if(planFilter==="done")arr=arr.filter(p=>p.done);
+ else arr=arr.filter(p=>!p.done);
+
+ arr.sort((a,b)=>planDateTime(a)-planDateTime(b));
+ $("plannerSectionTitle").textContent=planFilter==="today"?"Сегодня":planFilter==="done"?"Выполнено":"Предстоящие";
+
+ list.innerHTML=arr.length?arr.map(p=>{
+   const meta=[
+     p.date?toDisplayDate(p.date):"",
+     p.time||"",
+     p.repeat&&p.repeat!=="Не повторять"?("↻ "+p.repeat):"",
+     p.place?("⌖ "+p.place):""
+   ].filter(Boolean);
+   return `<div class="plan-card ${p.done?"done":""}">
+     <button class="plan-check" type="button" data-plan-check="${p.id}">${p.done?"✓":""}</button>
+     <div>
+       <div class="plan-title">${esc(p.title||"Напоминание")}</div>
+       <div class="plan-meta">${meta.map(x=>`<span class="plan-pill">${esc(x)}</span>`).join("")}</div>
+       ${p.note?`<div class="meta" style="margin-top:7px">${esc(p.note)}</div>`:""}
+     </div>
+     <button class="plan-more" type="button">⋮</button>
+   </div>`;
+ }).join(""):`<div class="empty">Здесь пока нет планов</div>`;
+
+ document.querySelectorAll("[data-plan-check]").forEach(b=>b.onclick=()=>{
+   const p=s.plans.find(x=>x.id===b.dataset.planCheck);
+   if(p){p.done=!p.done;save()}
+ });
+}
+
+function openPlanModal(prefillTitle=""){
+ modal("Новое напоминание",[
+   {k:"title",label:"Что напомнить",value:prefillTitle},
+   {k:"date",label:"Дата",type:"date",value:today()},
+   {k:"time",label:"Время",type:"time",value:"09:00"},
+   {k:"repeat",label:"Повтор",value:"Не повторять"},
+   {k:"place",label:"Место",value:""},
+   {k:"note",label:"Заметка",value:""}
+ ],v=>{s.plans.push({id:uid(),...v,done:false});save();switchScreen("planningScreen")});
+}
+
+const FIN_COLORS={
+ "Продукты":"#4aa4e8","Налоги":"#3591dc","Дети":"#ef3535","Коммунальные":"#f0d52a",
+ "Транспорт":"#437fbc","Дом":"#58aa45","Здоровье":"#8ed879","Развлечения":"#7c62df","Другое":"#9a9a9a"
+};
+const FIN_ICONS={"Продукты":"🛒","Налоги":"🧾","Дети":"👨‍👩‍👧","Коммунальные":"☀️","Транспорт":"🚗","Дом":"🏠","Здоровье":"❤","Развлечения":"🎉","Другое":"•"};
+let finMode="expense", finPeriod="month", finCursor=new Date();
+
+function moneyInPeriod(x){
+ const d=new Date((x.date||today())+"T12:00:00"), now=finCursor;
+ if(finPeriod==="all")return true;
+ if(finPeriod==="year")return d.getFullYear()===now.getFullYear();
+ if(finPeriod==="month")return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth();
+ if(finPeriod==="day")return d.toDateString()===now.toDateString();
+ if(finPeriod==="week"){
+   const a=new Date(now);a.setHours(0,0,0,0);a.setDate(a.getDate()-((a.getDay()+6)%7));
+   const b=new Date(a);b.setDate(a.getDate()+7);
+   return d>=a&&d<b;
+ }
+ return true;
+}
+function finTitle(){
+ const months=["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
+ if(finPeriod==="month")return months[finCursor.getMonth()]+" "+finCursor.getFullYear();
+ if(finPeriod==="year")return String(finCursor.getFullYear());
+ if(finPeriod==="day")return finCursor.toLocaleDateString("ru-RU");
+ if(finPeriod==="week")return "Неделя";
+ return "Весь период";
+}
+function renderFinance(){
+ if(!$("finCategoryList"))return;
+ const all=s.money.filter(moneyInPeriod);
+ const totalBalance=s.money.reduce((sum,x)=>sum+(x.type==="income"?1:-1)*(+x.amount||0),0);
+ $("finTotal").textContent=totalBalance.toLocaleString("ru-RU",{minimumFractionDigits:2,maximumFractionDigits:2})+" ₺";
+ $("finPeriodTitle").textContent=finTitle();
+
+ const rows=all.filter(x=>x.type===finMode);
+ const total=rows.reduce((a,x)=>a+(+x.amount||0),0);
+ $("finDonutTotal").textContent=total.toLocaleString("ru-RU",{maximumFractionDigits:2})+" ₺";
+
+ const grouped={};
+ rows.forEach(x=>{const k=x.category||"Другое";grouped[k]=(grouped[k]||0)+(+x.amount||0)});
+ const cats=Object.entries(grouped).sort((a,b)=>b[1]-a[1]);
+
+ if(!cats.length){
+   $("finDonut").style.background="conic-gradient(#555 0 100%)";
+   $("finCategoryList").innerHTML='<div class="empty" style="color:#c6c6bd">Операций за этот период пока нет</div>';
+   return;
+ }
+ let cur=0, parts=[];
+ cats.forEach(([name,val])=>{
+   const pct=total?val/total*100:0, next=cur+pct;
+   parts.push(`${FIN_COLORS[name]||"#888"} ${cur}% ${next}%`);cur=next;
+ });
+ $("finDonut").style.background=`conic-gradient(${parts.join(",")})`;
+ $("finCategoryList").innerHTML=cats.map(([name,val])=>{
+   const pct=total?Math.round(val/total*100):0,col=FIN_COLORS[name]||"#888";
+   return `<div class="fin-cat">
+    <div class="fin-cat-icon" style="background:${col}">${FIN_ICONS[name]||"•"}</div>
+    <div class="fin-cat-name">${esc(name)}</div>
+    <div class="fin-cat-right"><span class="fin-cat-pct">${pct}%</span><span class="fin-cat-amt">${val.toLocaleString("ru-RU",{maximumFractionDigits:2})} ₺</span></div>
+   </div>`;
+ }).join("");
+}
+document.querySelectorAll(".fin-main-tab").forEach(b=>b.onclick=()=>{
+ finMode=b.dataset.finMode;
+ document.querySelectorAll(".fin-main-tab").forEach(x=>x.classList.toggle("active",x===b));
+ renderFinance();
+});
+document.querySelectorAll(".fin-period-tabs button").forEach(b=>b.onclick=()=>{
+ finPeriod=b.dataset.period;
+ document.querySelectorAll(".fin-period-tabs button").forEach(x=>x.classList.toggle("active",x===b));
+ renderFinance();
+});
+$("finPrev").onclick=()=>{
+ if(finPeriod==="year")finCursor.setFullYear(finCursor.getFullYear()-1);
+ else if(finPeriod==="day")finCursor.setDate(finCursor.getDate()-1);
+ else finCursor.setMonth(finCursor.getMonth()-1);
+ renderFinance();
+};
+$("finNext").onclick=()=>{
+ if(finPeriod==="year")finCursor.setFullYear(finCursor.getFullYear()+1);
+ else if(finPeriod==="day")finCursor.setDate(finCursor.getDate()+1);
+ else finCursor.setMonth(finCursor.getMonth()+1);
+ renderFinance();
+};
+
+
+let txType="expense",txCategory="Продукты",txDate=today();
+const TX_CATS_EXP=[
+ ["Здоровье","❤","#ff4040"],["Досуг","▣","#62b947"],["Дом","⌂","#3986d7"],["Кафе","🍴","#f1cf13"],
+ ["Образование","🎓","#d94a8a"],["Подарки","🎁","#a8c29b"],["Продукты","🛒","#68b5dc"],["Еще","+","#8aa09a"]
+];
+const TX_CATS_INC=[
+ ["Зарплата","₺","#4dbd91"],["Подработка","✦","#448be0"],["Подарок","🎁","#b56ddf"],["Возврат","↩","#edab37"],
+ ["Продажа","⇄","#ef6a61"],["Проценты","%","#6ebc69"],["Другое","＋","#87949f"]
+];
+function dateOffset(days){
+ const d=new Date();d.setDate(d.getDate()+days);return d.toISOString().slice(0,10)
+}
+function shortDate(iso){
+ const d=new Date(iso+"T12:00:00");return String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")
+}
+function renderTxDates(){
+ $("txTodayLabel").textContent=shortDate(dateOffset(0));
+ $("txYesterdayLabel").textContent=shortDate(dateOffset(-1));
+ $("txBeforeLabel").textContent=shortDate(dateOffset(-2));
+}
+function renderTxCategories(){
+ const cats=txType==="expense"?TX_CATS_EXP:TX_CATS_INC;
+ $("txCategoryGrid").innerHTML=cats.map(([name,icon,col])=>`
+ <button class="tx-cat ${name===txCategory?"selected":""}" type="button" data-name="${esc(name)}">
+  <div class="tx-cat-circle" style="background:${col}">${icon}</div><span>${esc(name)}</span>
+ </button>`).join("");
+ document.querySelectorAll(".tx-cat").forEach(b=>b.onclick=()=>{
+   txCategory=b.dataset.name;
+   document.querySelectorAll(".tx-cat").forEach(x=>x.classList.toggle("selected",x===b));
+ });
+}
+function openTransactionScreen(){
+ txType="expense";txCategory="Продукты";txDate=today();
+ $("txAmount").value="0";$("txComment").value="";
+ document.querySelectorAll(".tx-tab").forEach(b=>b.classList.toggle("active",b.dataset.type===txType));
+ document.querySelectorAll(".tx-date-choice").forEach((b,i)=>b.classList.toggle("active",i===0));
+ document.querySelectorAll(".tx-tags button").forEach(b=>b.classList.remove("active"));
+ renderTxDates();renderTxCategories();switchScreen("transactionScreen");
+}
+$("txBack").onclick=()=>switchScreen("financeScreen");
+document.querySelectorAll(".tx-tab").forEach(b=>b.onclick=()=>{
+ txType=b.dataset.type;txCategory=txType==="expense"?"Продукты":"Зарплата";
+ document.querySelectorAll(".tx-tab").forEach(x=>x.classList.toggle("active",x===b));renderTxCategories();
+});
+document.querySelectorAll(".tx-date-choice").forEach(b=>b.onclick=()=>{
+ txDate=dateOffset(+b.dataset.offset);
+ document.querySelectorAll(".tx-date-choice").forEach(x=>x.classList.toggle("active",x===b));
+});
+$("txCalendar").onclick=()=>modal("Дата операции",[
+ {k:"date",label:"Дата",type:"date",value:txDate}
+],v=>{txDate=v.date;document.querySelectorAll(".tx-date-choice").forEach(x=>x.classList.remove("active"))});
+document.querySelectorAll(".tx-tags button").forEach(b=>b.onclick=()=>b.classList.toggle("active"));
+$("txSave").onclick=()=>{
+ const amount=+$("txAmount").value||0;if(amount<=0){alert("Введи сумму");return}
+ const tags=[...document.querySelectorAll(".tx-tags button.active")].map(b=>b.textContent.trim());
+ s.money.push({id:uid(),type:txType,amount,category:txCategory,date:txDate,note:$("txComment").value.trim(),tags});
+ save();switchScreen("financeScreen");
+};
+
+
+function drawSideProgress(){
+ const cv=$("sideProgressChart"); if(!cv)return;
+ const r=cv.getBoundingClientRect(),dpr=Math.max(1,devicePixelRatio||1);cv.width=r.width*dpr;cv.height=r.height*dpr;
+ const c=cv.getContext("2d");c.scale(dpr,dpr);c.clearRect(0,0,r.width,r.height);
+ c.beginPath();
+ for(let i=0;i<=24;i++){
+   const x=i/24*r.width;
+   const y=r.height-8-(i/24)*r.height*.65-Math.sin(i*.9)*5;
+   i?c.lineTo(x,y):c.moveTo(x,y);
+ }
+ c.strokeStyle="#9d74ff";c.lineWidth=2.2;c.stroke();
+}
+function renderEventPreview(){
+ const box=$("eventPreviewContent"); if(!box)return;
+ const e=s.events.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||""))[0];
+ if(!e){
+   box.innerHTML=`<div class="preview-empty"><div class="preview-node"></div><h3>Выбери событие</h3><p>Нажми на узел на линии или открой вкладку «События».</p></div>`;
+   return;
+ }
+ box.innerHTML=`<div class="preview-card">
+   <div class="preview-chip-row"><span class="preview-chip">${esc(e.category||"Событие")}</span><span class="meta">${esc(toDisplayDate(e.date||""))}</span></div>
+   <div class="preview-title">${esc(e.title||"Событие")}</div>
+   <div class="meta">${esc(e.note||"Важный момент жизни")}</div>
+   <div class="preview-photo">Фото события</div>
+   <div class="preview-tags">
+     <span class="preview-tag">${esc(e.category||"Категория")}</span>
+     <span class="preview-tag">✦ Важное событие</span>
+   </div>
+   <div class="preview-section">
+     <div class="info-title">ВЛИЯНИЕ НА НИТИ</div>
+     <div class="impact-grid">
+       <div class="impact-mini"><div class="impact-dot purple"></div><div>Главная</div><b>+24%</b></div>
+       <div class="impact-mini"><div class="impact-dot blue"></div><div>Рост</div><b>+18%</b></div>
+       <div class="impact-mini"><div class="impact-dot orange"></div><div>Связи</div><b>+8%</b></div>
+     </div>
+   </div>
+   <div class="preview-section"><div class="info-title">ЗАМЕТКИ</div><div class="meta">${esc(e.note||"Нет заметки")}</div></div>
+   <div class="preview-actions"><button type="button">✎ Редактировать</button><button type="button" class="danger">🗑 Удалить</button></div>
+ </div>`;
+}
+
+function editThread(id){
+ const t=s.threads.find(x=>x.id===id); if(!t)return;
+ modal("Редактировать нить",[
+  {k:"name",label:"Название",value:t.name||""},
+  {k:"category",label:"Категория",value:t.category||""},
+  {k:"startDate",label:"Дата начала",type:"date",value:t.startDate||today()},
+  {k:"color",label:"Цвет",type:"color",value:t.color||"#62d79a"}
+ ],v=>{
+   Object.assign(t,{name:v.name,category:v.category,startDate:v.startDate,color:v.color||t.color});
+   save();
+ });
+}
+
+$("activityBtn").onclick=()=>modal("Активность",[
+ {k:"kind",label:"Тип",type:"select",options:[{v:"walk",t:"Ходьба"},{v:"run",t:"Бег"},{v:"swim",t:"Плавание"},{v:"bike",t:"Велосипед"},{v:"workout",t:"Другая тренировка"}]},
+ {k:"date",label:"Дата",type:"date",value:today()},
+ {k:"steps",label:"Шаги (ходьба / бег)",type:"number",value:"0"},
+ {k:"minutes",label:"Время, минут",type:"number",value:"30"},
+ {k:"km",label:"Расстояние, км",type:"number",value:"0"}
+],v=>{s.activity.push({id:uid(),...v,steps:+v.steps||0,minutes:+v.minutes||0,km:+v.km||0});save()});
+
+$("sideAddThread").onclick=()=>$("threadBtn").click();
+document.querySelectorAll(".life-tabs button[data-open]").forEach(b=>b.onclick=()=>switchScreen(b.dataset.open));
+$("threadBtn").onclick=()=>modal("Новая нить",[
+ {k:"name",label:"Название",value:""},
+ {k:"category",label:"Категория",value:""},
+ {k:"startDate",label:"Дата начала",type:"date",value:today()},
+ {k:"color",label:"Цвет",type:"color",value:"#62d79a"}
+],v=>{s.threads.push({id:uid(),...v,color:v.color||"#62d79a"});save()});
+
+$("addEventBtn").onclick=()=>modal("Новое событие",[
+ {k:"title",label:"Название",value:""},
+ {k:"date",label:"Дата",type:"date",value:today()},
+ {k:"time",label:"Время",type:"time",value:"12:00"},
+ {k:"category",label:"Категория",value:""},
+ {k:"note",label:"Заметка",value:""}
+],v=>{s.events.push({id:uid(),...v,color:"#7aa7ff"});save()});
+
+
+
+document.querySelectorAll("[data-filter]").forEach(b=>b.onclick=()=>{
+ const k=b.dataset.filter;
+ s.viewFilters[k]=!s.viewFilters[k];
+ localStorage.setItem(KEY,JSON.stringify(s));
+ b.classList.toggle("active",s.viewFilters[k]);
+ drawDNA();
+});
+
+$("addPlanBtn").onclick=()=>openPlanModal();
+$("quickPlanBtn").onclick=()=>{
+ const inp=$("quickPlanInput"),t=(inp.value||"").trim();
+ if(t){openPlanModal(t);inp.value=""}else openPlanModal();
+};
+$("quickPlanInput").addEventListener("keydown",e=>{
+ if(e.key==="Enter"){$("quickPlanBtn").click()}
+});
+document.querySelectorAll(".plan-filter").forEach(b=>b.onclick=()=>{
+ planFilter=b.dataset.planFilter;
+ document.querySelectorAll(".plan-filter").forEach(x=>x.classList.toggle("active",x===b));
+ renderPlans();
+});
+
+$("addPersonBtn").onclick=()=>modal("Новый человек",[
+ {k:"name",label:"Имя",value:""},
+ {k:"relation",label:"Кто это",value:"Друг"},
+ {k:"phone",label:"Телефон",value:""}
+],v=>{s.people.push({id:uid(),...v});save()});
+
+$("addMoneyBtn").onclick=()=>openTransactionScreen();
+
+window.addEventListener("resize",()=>requestAnimationFrame(drawDNA));
+
+if(!s.profile.birthDate){
+ setTimeout(()=>modal("Начало жизни",[
+  {k:"firstName",label:"Имя",value:s.profile.firstName||""},
+  {k:"middleName",label:"Отчество",value:s.profile.middleName||""},
+  {k:"lastName",label:"Фамилия",value:s.profile.lastName||""},
+  {k:"birthDate",label:"Дата рождения",type:"date",value:s.profile.birthDate||""}
+ ],v=>{
+   s.profile={...s.profile,...v,name:v.firstName||"Я"};
+   if(s.threads[0])s.threads[0].startDate=v.birthDate;
+   save()
+ }),300);
+}
+
+render();
+</script>
+</body>
+</html>
