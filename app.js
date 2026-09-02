@@ -1,11 +1,14 @@
 const $=id=>document.getElementById(id);
-const KEY="niti-clean-v1";
+const KEY="niti-clean-v2";
+const LEGACY_KEYS=["niti-clean-v1","niti-live-lab","niti-live-lab-v14"];
 const base={
   profile:{name:"",birthDate:""},
   layers:{threads:true,events:true,plans:true,finance:true,activity:true},
   threads:[],events:[],plans:[],finance:[],activity:[]
 };
-let s=JSON.parse(localStorage.getItem(KEY)||"null")||structuredClone(base);
+let restored=null;
+for(const key of [KEY,...LEGACY_KEYS]){try{const value=JSON.parse(localStorage.getItem(key)||"null");if(value){restored=value;break}}catch{}}
+let s=restored||structuredClone(base);
 s={...base,...s,profile:{...base.profile,...(s.profile||{})},layers:{...base.layers,...(s.layers||{})}};
 const save=()=>localStorage.setItem(KEY,JSON.stringify(s));
 const today=()=>new Date().toISOString().slice(0,10);
@@ -226,3 +229,30 @@ window.addEventListener("error",ev=>{
 });
 requestAnimationFrame(()=>{render();draw();});
 if(!s.profile.birthDate)setTimeout(()=>$("profileBtn").click(),350);
+
+
+function formDataObject(form){return Object.fromEntries(new FormData(form).entries())}
+$("modalForm").addEventListener("submit",event=>{
+  event.preventDefault();
+  if(!event.submitter||event.submitter.value==="cancel"){modal.close();return}
+  const value=formDataObject(event.currentTarget);
+  if(currentType==="profile"){
+    s.profile.name=(value.name||"").trim();s.profile.birthDate=value.birthDate||"";
+  }else{
+    const map={thread:"threads",event:"events",plan:"plans",finance:"finance",activity:"activity"},key=map[currentType];
+    if(!key)return;
+    if(currentType==="thread"){value.title=(value.title||"Новая нить").trim();value.startDate=value.date;delete value.date}
+    if(currentType==="event"||currentType==="plan")value.title=(value.title||({event:"Событие",plan:"План"}[currentType])).trim();
+    if(currentType==="finance")value.amount=Number(value.amount)||0;
+    if(currentType==="activity"){value.steps=Math.max(0,Number(value.steps)||0);value.minutes=Math.max(0,Number(value.minutes)||0);value.km=Math.max(0,Number(value.km)||0)}
+    value.id=crypto.randomUUID?.()||Date.now()+"-"+Math.random();s[key].push(value);
+  }
+  save();modal.close();render();draw();
+});
+$("profileBtn").onclick=()=>{
+  currentType="profile";$("modalTitle").textContent="Мой профиль";
+  fields.innerHTML=field("Имя","name","text",`value="${esc(s.profile.name)}"`)+field("Дата рождения","birthDate","date",`value="${esc(s.profile.birthDate)}"`);
+  modal.showModal();
+};
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(console.error));
+
