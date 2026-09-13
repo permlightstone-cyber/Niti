@@ -1,4 +1,4 @@
-const C="niti-pwa-v3",A=["./","./index.html","./styles.css","./app.js","./manifest.webmanifest","./icon.svg","./icon-192.svg","./icon-512.svg"];
+const C="niti-pwa-v3",A=["./","./index.html","./styles.css?v=3","./app.js?v=3","./manifest.webmanifest","./icon.svg","./icon-192.svg","./icon-512.svg"];
 self.addEventListener("install",e=>e.waitUntil(caches.open(C).then(c=>c.addAll(A)).then(()=>self.skipWaiting())));
 self.addEventListener("activate",e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith("niti-pwa-")&&key!==C).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener("fetch",e=>{
