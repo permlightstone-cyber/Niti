@@ -43,6 +43,13 @@ function draw(){
   const pad=28,usable=w-pad*2,content=usable*zoom,left=pad-(content-usable)/2+pan,cy=h/2;
   const xFor=ms=>left+((ms-birth)/span)*content;
   const visible=x=>x>-50&&x<w+50;
+  const nowX=xFor(Date.now());
+  if(nowX>=0&&nowX<=w){
+    ctx.save();ctx.strokeStyle="#bcaaff";ctx.lineWidth=1;ctx.setLineDash([4,5]);
+    ctx.beginPath();ctx.moveTo(nowX,30);ctx.lineTo(nowX,h-26);ctx.stroke();
+    ctx.fillStyle="#d9ceff";ctx.font="11px system-ui";ctx.textAlign="center";
+    ctx.fillText("Сегодня",Math.max(28,Math.min(w-28,nowX)),20);ctx.restore();
+  }
   const startMs=birth+Math.max(0,(-left)/content)*span;
   const endMs=birth+Math.min(1,(w-left)/content)*span;
   const vspan=Math.max(1,endMs-startMs);
@@ -187,6 +194,13 @@ wrap.addEventListener("pointermove",e=>{
 },{passive:false}));
 
 $("resetView").onclick=()=>{zoom=1;pan=0;draw()};
+$("todayView").onclick=()=>{
+  const {birth,span}=bounds();
+  const width=wrap.getBoundingClientRect().width;
+  // Match draw's coordinates and keep the current zoom level.
+  pan=(.5-(Date.now()-birth)/span)*(width-56)*zoom;
+  draw();
+};
 document.querySelectorAll("[data-layer]").forEach(b=>b.onclick=()=>{
   const k=b.dataset.layer;s.layers[k]=!s.layers[k];b.classList.toggle("active",s.layers[k]);save();draw();
 });

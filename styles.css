@@ -20,7 +20,8 @@ button:active{transform:scale(.98)}
 .chip.active{color:#eef4ff;border-color:rgba(139,114,255,.55);box-shadow:0 0 18px rgba(139,114,255,.13)}
 .timeline-card,.panel{background:linear-gradient(180deg,rgba(17,29,48,.96),rgba(8,16,28,.96));border:1px solid rgba(255,255,255,.07);border-radius:20px;box-shadow:0 16px 40px rgba(0,0,0,.25)}
 .timeline-card{padding:12px}
-.timeline-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.timeline-head{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;margin-bottom:7px}
+.timeline-controls{display:flex;gap:6px;flex-shrink:0}
 .timeline-head b{display:block}
 .timeline-head span{display:block;color:var(--muted);font-size:11px;margin-top:2px}
 .canvas-wrap{height:440px;position:relative;overflow:hidden;border-radius:16px;background:
