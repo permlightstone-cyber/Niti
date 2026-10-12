@@ -4,12 +4,13 @@ const LEGACY_KEYS=["niti-clean-v1","niti-live-lab","niti-live-lab-v14"];
 const base={
   profile:{name:"",birthDate:""},
   layers:{threads:true,events:true,plans:true,finance:true,activity:true},
-  threads:[],events:[],plans:[],finance:[],activity:[]
+  threads:[],events:[],plans:[],finance:[],financeTransactions:[],activity:[]
 };
 let restored=null;
 for(const key of [KEY,...LEGACY_KEYS]){try{const value=JSON.parse(localStorage.getItem(key)||"null");if(value){restored=value;break}}catch{}}
 let s=restored||structuredClone(base);
 s={...base,...s,profile:{...base.profile,...(s.profile||{})},layers:{...base.layers,...(s.layers||{})}};
+s.financeTransactions=Array.isArray(s.financeTransactions)?s.financeTransactions:[];
 const save=()=>localStorage.setItem(KEY,JSON.stringify(s));
 const today=()=>new Date().toISOString().slice(0,10);
 const esc=x=>String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
@@ -126,7 +127,7 @@ function draw(){
   if(s.layers.finance){
     ctx.save();
     ctx.strokeStyle="#61e3a6";ctx.lineWidth=2;ctx.shadowColor="#61e3a6";ctx.shadowBlur=8;
-    for(const f of s.finance){
+    for(const f of financeTimelinePoints()){
       if(!f.date)continue;
       const ms=new Date(f.date+"T"+(f.time||"12:00")+":00").getTime(),x=xFor(ms);if(!visible(x))continue;
       const val=Number(f.amount)||0;
@@ -232,6 +233,7 @@ function render(){
   $("eventsList").innerHTML=s.events.length?s.events.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>`<div class="item"><b>${esc(e.title||"Событие")}</b><div class="meta">${esc(e.date)} ${esc(e.time||"")}</div></div>`).join(""):"Пока нет событий";
   $("plansList").className="list"+(s.plans.length?"":" empty");
   $("plansList").innerHTML=s.plans.length?s.plans.slice().sort((a,b)=>(a.date||"").localeCompare(b.date||"")).map(p=>`<div class="item"><b>${esc(p.title||"План")}</b><div class="meta">${esc(p.date)} ${esc(p.time||"")}</div></div>`).join(""):"Пока нет планов";
+  renderFinance();
 }
 window.addEventListener("resize",()=>requestAnimationFrame(draw));
 window.addEventListener("error",ev=>{
@@ -270,3 +272,189 @@ $("profileBtn").onclick=()=>{
 };
 if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(console.error));
 
+
+
+// Finance imports use browser-native APIs only. No transaction file is sent to the server.
+function financeTimelinePoints(){
+  const daily=new Map();
+  for(const t of s.financeTransactions){
+    if((t.kind!=="income"&&t.kind!=="expense")||!t.date)continue;
+    const amount=Number(t.amountTry);
+    if(!Number.isFinite(amount))continue;
+    daily.set(t.date,(daily.get(t.date)||0)+(t.kind==="income"?amount:-amount));
+  }
+  return [...s.finance,...[...daily].map(([date,amount])=>({date,amount}))];
+}
+const fmtTry=n=>new Intl.NumberFormat("ru-RU",{maximumFractionDigits:2,minimumFractionDigits:0}).format(n)+" ₺";
+const financeDateLabel=d=>/^\d{4}-\d\d-\d\d$/.test(d||"")?d.split("-").reverse().join("."):String(d||"");
+function financeMonth(){
+  const months=[...new Set([...s.financeTransactions.map(t=>(t.date||"").slice(0,7)),...s.finance.map(t=>(t.date||"").slice(0,7))].filter(x=>/^\d{4}-\d\d$/.test(x)))].sort().reverse();
+  const select=$("financeMonth"),old=select.value;
+  if(!months.length)months.push(today().slice(0,7));
+  select.innerHTML=months.map(m=>'<option value="'+esc(m)+'">'+esc(new Date(m+"-01T12:00:00").toLocaleDateString("ru-RU",{month:"long",year:"numeric"}))+"</option>").join("");
+  select.value=months.includes(old)?old:months[0];
+  return select.value;
+}
+function renderFinance(){
+  if(!$("financeMonth"))return;
+  const month=financeMonth();
+  const imported=s.financeTransactions.filter(t=>(t.date||"").slice(0,7)===month);
+  const manual=s.finance.filter(t=>(t.date||"").slice(0,7)===month).map(t=>({
+    id:t.id,kind:Number(t.amount)>=0?"income":"expense",date:t.date,
+    amountTry:Math.abs(Number(t.amount)||0),category:"Ручная запись",account:"",comment:""
+  }));
+  const rows=[...imported,...manual];
+  const income=rows.filter(t=>t.kind==="income").reduce((n,t)=>n+Number(t.amountTry||0),0);
+  const expenses=rows.filter(t=>t.kind==="expense").reduce((n,t)=>n+Number(t.amountTry||0),0);
+  const transfers=rows.filter(t=>t.kind==="transfer").length;
+  const stats=$("financeStats");
+  const tile=(label,value,cls)=>'<div class="finance-stat '+cls+'"><span>'+label+'</span><strong>'+fmtTry(value)+'</strong></div>';
+  stats.innerHTML=tile("Доходы",income,"income")+tile("Расходы",expenses,"expense")+tile("Разница",income-expenses,(income-expenses)>=0?"income":"expense");
+  $("financeCount").textContent=rows.length+" операций, включая "+transfers+" переводов (переводы не входят в доходы/расходы)";
+  const cats=new Map();
+  rows.filter(t=>t.kind==="expense").forEach(t=>cats.set(t.category||"Без категории",(cats.get(t.category||"Без категории")||0)+Number(t.amountTry||0)));
+  const catRows=[...cats].sort((a,b)=>b[1]-a[1]);
+  $("financeCategories").innerHTML=catRows.length?catRows.map(([name,value])=>
+    '<div class="finance-cat"><div class="finance-cat-top"><span>'+esc(name)+'</span><b>'+fmtTry(value)+'</b></div><div class="finance-track"><i style="width:'+Math.min(100,Math.round(value/Math.max(expenses,1)*100))+'%"></i></div></div>'
+  ).join(""):'<div class="empty">Нет расходов за этот месяц</div>';
+  const names={income:"Доход",expense:"Расход",transfer:"Перевод"};
+  const sorted=rows.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(a.kind||"").localeCompare(b.kind||""));
+  $("financeOperations").innerHTML=sorted.length?sorted.map(t=>{
+    const isTransfer=t.kind==="transfer";
+    const signed=t.kind==="expense"?"−":t.kind==="income"?"+":"";
+    const amount=isTransfer?fmtTry(Number(t.amountFrom||0)):fmtTry(Number(t.amountTry||0));
+    const detail=isTransfer?(t.accountFrom||"")+" → "+(t.accountTo||""):[t.category,t.account,t.tags,t.comment].filter(Boolean).join(" · ");
+    return '<div class="finance-operation"><div class="finance-op-main"><b>'+esc(isTransfer?"Перевод":t.category||names[t.kind]||"Операция")+'</b><strong class="'+(t.kind==="income"?"positive":t.kind==="expense"?"negative":"")+'">'+signed+amount+'</strong></div><div class="meta">'+esc(financeDateLabel(t.date))+' · '+esc(detail)+'</div></div>';
+  }).join(""):'<div class="empty">За этот месяц записей нет. Импортируй Excel-файл из своей финансовой программы.</div>';
+}
+$("financeMonth").addEventListener("change",renderFinance);
+$("importFinanceBtn").addEventListener("click",()=>$("financeFile").click());
+$("financeFile").addEventListener("change",async e=>{
+  const file=e.target.files?.[0];if(!file)return;
+  const status=$("financeImportStatus");
+  status.textContent="Проверяю "+file.name+"…";
+  try{
+    const imported=file.name.toLowerCase().endsWith(".xlsx")?
+      await readFinanceXlsx(file):JSON.parse(await file.text());
+    if(imported.schema!=="niti.finance.v1"||!Array.isArray(imported.transactions))throw Error("Неизвестная структура файла");
+    const clean=imported.transactions.filter(t=>t&&/^\d{4}-\d\d-\d\d$/.test(t.date||"")&&["income","expense","transfer"].includes(t.kind))
+      .map(t=>({...t,amountTry:t.kind==="transfer"?null:Math.abs(Number(t.amountTry)||0)}));
+    if(!clean.length)throw Error("Операции не обнаружены");
+    const months=new Set(clean.map(t=>t.date.slice(0,7)));
+    const previous=s.financeTransactions;
+    s.financeTransactions=previous.filter(t=>!months.has((t.date||"").slice(0,7))).concat(clean);
+    try{save()}catch(err){s.financeTransactions=previous;throw Error("Недостаточно памяти устройства для сохранения операций")}
+    $("financeMonth").value="";
+    renderFinance();draw();
+    status.textContent="Импортировано "+clean.length+" операций. Записи затронутых месяцев обновлены без дубликатов.";
+  }catch(error){status.textContent="Не удалось импортировать: "+(error?.message||String(error));}
+  e.target.value="";
+});
+$("clearFinanceBtn").addEventListener("click",()=>{
+  if(!s.financeTransactions.length)return;
+  if(!confirm("Удалить все импортированные финансовые операции только с этого устройства? Ручные записи останутся."))return;
+  s.financeTransactions=[];save();renderFinance();draw();$("financeImportStatus").textContent="Импортированные операции удалены";
+});
+$("exportFinanceBtn").addEventListener("click",()=>{
+  const content=JSON.stringify({schema:"niti.finance.v1",transactions:s.financeTransactions},null,2);
+  const url=URL.createObjectURL(new Blob([content],{type:"application/json;charset=utf-8"}));
+  const a=document.createElement("a");a.href=url;a.download="niti-finance-backup.json";document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
+function excelDay(value){
+  if(typeof value==="string"&&/^\d{4}-\d\d-\d\d/.test(value))return value.slice(0,10);
+  const n=Number(value);
+  if(!Number.isFinite(n))return "";
+  return new Date(Date.UTC(1899,11,30)+Math.floor(n)*86400000).toISOString().slice(0,10);
+}
+async function readFinanceXlsx(file){
+  if(!("DecompressionStream" in window))throw Error("Этот браузер не поддерживает чтение XLSX. Можно импортировать JSON.");
+  const bytes=new Uint8Array(await file.arrayBuffer()),dv=new DataView(bytes.buffer);
+  const decoder=new TextDecoder("utf-8");
+  const u16=p=>dv.getUint16(p,true),u32=p=>dv.getUint32(p,true);
+  let eocd=-1;
+  for(let p=bytes.length-22;p>=Math.max(0,bytes.length-65557);p--)if(u32(p)===0x06054b50){eocd=p;break}
+  if(eocd<0)throw Error("Это не корректный файл XLSX");
+  const entries=new Map(),count=u16(eocd+10);let p=u32(eocd+16);
+  for(let i=0;i<count;i++){
+    if(u32(p)!==0x02014b50)throw Error("Ошибка структуры Excel");
+    const method=u16(p+10),length=u32(p+20),nameLen=u16(p+28),extra=u16(p+30),comment=u16(p+32),local=u32(p+42);
+    const name=decoder.decode(bytes.slice(p+46,p+46+nameLen));
+    if(u32(local)!==0x04034b50)throw Error("Ошибка содержимого Excel");
+    const at=local+30+u16(local+26)+u16(local+28);
+    entries.set(name,{method,data:bytes.slice(at,at+length)});
+    p+=46+nameLen+extra+comment;
+  }
+  async function xmlFile(name){
+    const entry=entries.get(name);
+    if(!entry)throw Error("В Excel нет "+name);
+    let raw=entry.data;
+    if(entry.method===8){
+      const stream=new Blob([raw]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+      raw=new Uint8Array(await new Response(stream).arrayBuffer());
+    }else if(entry.method!==0)throw Error("Неподдерживаемое сжатие XLSX");
+    const doc=new DOMParser().parseFromString(decoder.decode(raw),"application/xml");
+    if(doc.getElementsByTagName("parsererror").length)throw Error("Повреждён XML внутри Excel");
+    return doc;
+  }
+  const nodes=(root,name)=>Array.from(root.getElementsByTagNameNS("*",name));
+  const shared=[];
+  if(entries.has("xl/sharedStrings.xml")){
+    const ss=await xmlFile("xl/sharedStrings.xml");
+    for(const si of nodes(ss,"si"))shared.push(nodes(si,"t").map(t=>t.textContent||"").join(""));
+  }
+  const workbook=await xmlFile("xl/workbook.xml"),rels=await xmlFile("xl/_rels/workbook.xml.rels");
+  const relation=new Map(nodes(rels,"Relationship").map(x=>[x.getAttribute("Id"),x.getAttribute("Target")]));
+  const txns=[];
+  function fromRows(sheetName,rows){
+    const header=rows[1]||[];
+    const col=label=>header.indexOf(label);
+    const get=(row,label)=>{const i=col(label);return i>=0?row[i]:null};
+    for(let r=2;r<rows.length;r++){
+      const row=rows[r],date=excelDay(get(row,"Дата и время"));
+      if(!date)continue;
+      const common={id:"import-"+sheetName+"-"+r, date};
+      if(sheetName==="Переводы"){
+        const amount=Number(get(row,"Сумма в исходящей валюте счета"));
+        if(!Number.isFinite(amount))continue;
+        txns.push({...common,kind:"transfer",accountFrom:get(row,"Исходящий счет")||"",accountTo:get(row,"Входящий счет")||"",
+          amountFrom:amount,currencyFrom:get(row,"Валюта исходящего счета")||"",
+          amountTo:Number(get(row,"Сумма во входящей валюте счета"))||null,
+          currencyTo:get(row,"Валюта входящего счета")||"",comment:get(row,"Комментарий")||""});
+      }else{
+        const amount=Number(get(row,"Сумма в валюте учета"));
+        if(!Number.isFinite(amount))continue;
+        txns.push({...common,kind:sheetName==="Доходы"?"income":"expense",
+          category:get(row,"Категория")||"",account:get(row,"Счет")||"",amountTry:Math.abs(amount),
+          currency:get(row,"Валюта учета")||"TRY",amountAccount:Number(get(row,"Сумма в валюте счета"))||null,
+          accountCurrency:get(row,"Валюта счета")||"",tags:get(row,"Теги")||"",comment:get(row,"Комментарий")||""});
+      }
+    }
+  }
+  for(const sheet of nodes(workbook,"sheet")){
+    const name=sheet.getAttribute("name");
+    if(!["Доходы","Расходы","Переводы"].includes(name))continue;
+    const id=sheet.getAttribute("r:id")||sheet.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships","id");
+    let target=relation.get(id)||"";
+    if(!target)continue;
+    target=target.startsWith("/")?target.slice(1):"xl/"+target;
+    const parts=[];for(const seg of target.split("/"))if(seg==="..")parts.pop();else if(seg&&seg!==".")parts.push(seg);
+    const doc=await xmlFile(parts.join("/")),rows=[];
+    for(const row of nodes(doc,"row")){
+      const rowN=Number(row.getAttribute("r"))||rows.length+1;
+      const out=[];for(const cell of nodes(row,"c")){
+        const ref=cell.getAttribute("r")||"",letters=(ref.match(/^[A-Z]+/)||[""])[0];
+        let col=0;for(const ch of letters)col=col*26+ch.charCodeAt(0)-64;
+        if(!col)continue;
+        const raw=nodes(cell,"v")[0]?.textContent||"";
+        const type=cell.getAttribute("t");
+        const value=type==="s"?(shared[Number(raw)]??""):type==="inlineStr"?nodes(cell,"t").map(x=>x.textContent).join(""):type==="str"?raw:raw===""?null:Number(raw);
+        out[col-1]=value;
+      }
+      rows[rowN-1]=out;
+    }
+    fromRows(name,rows);
+  }
+  if(!txns.length)throw Error("В XLSX нет строк доходов, расходов или переводов");
+  return {schema:"niti.finance.v1",transactions:txns};
+}
