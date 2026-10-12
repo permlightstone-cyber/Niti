@@ -7,7 +7,7 @@
   <meta name="description" content="Нити — живая линия всей жизни" />
   <link rel="manifest" href="manifest.webmanifest" />
   <title>Нити</title>
-  <link rel="stylesheet" href="styles.css?v=3" />
+  <link rel="stylesheet" href="styles.css?v=4" />
 </head>
 <body>
   <main class="app">
@@ -66,6 +66,34 @@
         <div id="plansList" class="list empty">Пока нет планов</div>
       </div>
     </section>
+    <section class="panel finance-panel" id="financePanel">
+      <div class="finance-head">
+        <h3>Финансы</h3>
+        <div class="finance-tools">
+          <select id="financeMonth" aria-label="Месяц"></select>
+          <button id="importFinanceBtn" class="small">Импорт Excel / JSON</button>
+          <input type="file" id="financeFile" accept=".xlsx,.json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/json" hidden>
+        </div>
+      </div>
+      <p class="finance-help">Файл читается прямо на устройстве. Суммы и счета не загружаются в GitHub или на сервер. Повторный импорт обновляет месяцы из файла.</p>
+      <div id="financeStats" class="finance-stats"></div>
+      <div class="finance-count" id="financeCount"></div>
+      <div class="finance-columns">
+        <div>
+          <h4>Категории расходов</h4>
+          <div id="financeCategories" class="finance-categories"></div>
+        </div>
+        <div>
+          <h4>Операции</h4>
+          <div id="financeOperations" class="finance-operations"></div>
+        </div>
+      </div>
+      <div class="finance-footer">
+        <button class="ghost small" id="exportFinanceBtn">Скачать резервную копию</button>
+        <button class="ghost small" id="clearFinanceBtn">Очистить импорт</button>
+      </div>
+      <p id="financeImportStatus" class="finance-help" role="status" aria-live="polite"></p>
+    </section>
   </main>
 
   <dialog id="modal">
@@ -82,7 +110,7 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=3"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>
 
