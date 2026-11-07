@@ -24,7 +24,7 @@ test("zoom keeps anchor and prevents escape or microscopic windows",()=>{
  const a=zoomDomain(full,.2,.35,outer);
  assert.ok(a.start>=0&&a.end<=outer.end);
  assert.ok(Math.abs((a.start+(a.end-a.start)*.35)-outer.end*.35)<1);
- const b=panDomain(a,-50*D,outer);
+ const b=panDomain(a,-500*D,outer);
  assert.equal(b.start,0);
  const c=panDomain(a,500*D,outer);
  assert.equal(c.end,outer.end);
