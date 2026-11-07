@@ -19,9 +19,12 @@ jobs:
         with:
           node-version: "22"
       - name: Test universal-memory model
-        run: node --test tests/memory-core.test.mjs
+        run: node --test tests/*.test.mjs
       - name: Check JavaScript syntax
         run: |
           node --check memory-core.mjs
           node --check memory-store.mjs
           node --check memory-app.mjs
+          node --check memory-timeline.mjs
+          node --check memory-timeline-ui.mjs
+          node --check memory-bahce-bridge.mjs
