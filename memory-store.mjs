@@ -34,6 +34,25 @@ export const listSpaces=()=>request("spaces","readonly",s=>s.getAll());
 export const listAssets=()=>request("assets","readonly",s=>s.getAll());
 export const getEvent=id=>request("events","readonly",s=>s.get(id));
 export const putEvent=e=>request("events","readwrite",s=>s.put(e));
+export async function saveEventRevision(event,expectedRevision=0){
+  const db=await openMemoryDb();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction("events","readwrite"),store=tx.objectStore("events");
+    let conflict=null;
+    const get=store.get(event.id);
+    get.onsuccess=()=>{
+      const current=get.result,revision=current?.revision||0;
+      if(revision!==expectedRevision){
+        conflict=new Error("Эта запись была изменена в другом окне. Обнови страницу и проверь новую версию.");
+        tx.abort();return;
+      }
+      store.put(event);
+    };
+    tx.oncomplete=()=>resolve(event.id);
+    tx.onabort=()=>reject(conflict||tx.error||new Error("Запись не сохранена"));
+    tx.onerror=()=>reject(tx.error||new Error("Ошибка записи"));
+  });
+}
 export const putSpace=e=>request("spaces","readwrite",s=>s.put(e));
 export const putAsset=e=>request("assets","readwrite",s=>s.put(e));
 export const removeAsset=id=>request("assets","readwrite",s=>s.delete(id));
