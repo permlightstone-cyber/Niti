@@ -223,3 +223,5 @@ async function init(){
  }catch(err){$("memoryResults").innerHTML='<div class="empty"><b>Не удалось открыть память</b><p>'+escapeHtml(err.message)+'</p></div>';toast(err.message,true)}
 }
 init();
+
+if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(()=>{});
