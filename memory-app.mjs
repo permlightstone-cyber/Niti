@@ -1,5 +1,5 @@
 import {DEFAULT_SPACES,normalizeEvent,normalizeSpace,visibleEvents,groupByTime,legacyToEvents,uid,validTime,timePrecision} from "./memory-core.mjs";
-import {openMemoryDb,listEvents,listSpaces,listAssets,getEvent,putEvent,putSpace,putAsset,removeAsset,exportMemory,importMemory} from "./memory-store.mjs";
+import {openMemoryDb,listEvents,listSpaces,listAssets,getEvent,putEvent,saveEventRevision,putSpace,putAsset,removeAsset,exportMemory,importMemory} from "./memory-store.mjs";
 const $=id=>document.getElementById(id);
 const escapeHtml=x=>String(x===undefined||x===null?"":x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let state={events:[],spaces:[],assets:[],view:"timeline"};
@@ -127,7 +127,7 @@ async function saveEvent(e){
   category:$("eventCategory").value,notes:$("eventNotes").value,
   tags:$("eventTags").value.split(","),links:$("eventLinks").value.split(","),fields
  },existing);
- await putEvent(record);
+ await saveEventRevision(record,existing?.revision||0);
  let savedPhotos=0;
  for(const file of photos){
   await putAsset({id:uid("photo"),eventId:record.id,name:file.name,type:file.type,size:file.size,
@@ -158,6 +158,7 @@ $("eventSpace").addEventListener("change",()=>renderFields());
 $("eventPrecision").addEventListener("change",updatePrecision);
 $("addEventBtn").addEventListener("click",()=>openEvent(""));
 $("addSpaceBtn").addEventListener("click",()=>openSpace(""));
+$("editSpaceBtn").addEventListener("click",()=>{const id=$("spaceFilter").value;if(id==="all"){toast("Сначала выбери пространство в фильтре",true);return}openSpace(id)});
 for(const id of ["spaceFilter","statusFilter"])$(id).addEventListener("change",render);
 $("searchInput").addEventListener("input",render);
 document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>{state.view=b.dataset.view;render()}));
@@ -175,7 +176,7 @@ $("spaceForm").addEventListener("submit",async e=>{
   const rawLines=$("spaceFields").value.split("\n").map(s=>s.trim()).filter(Boolean);
   const fields=rawLines.map((line,i)=>{
    const parts=line.split("|").map(s=>s.trim());
-   return {key:previous?.fields?.[i]?.key||"field"+(i+1),label:parts[0],type:parts[1]||"text"};
+   return {key:previous?.fields?.find(f=>f.label===parts[0])?.key||previous?.fields?.[i]?.key||"field"+(i+1),label:parts[0],type:parts[1]||"text"};
   });
   const space=normalizeSpace({name:$("spaceName").value,color:$("spaceColor").value,fields},previous);
   await putSpace(space);$("spaceDialog").close();await reload();toast("Пространство сохранено");
