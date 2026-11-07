@@ -3,6 +3,14 @@ import {openMemoryDb,listEvents,listSpaces,listAssets,getEvent,putEvent,saveEven
 const $=id=>document.getElementById(id);
 const escapeHtml=x=>String(x===undefined||x===null?"":x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let state={events:[],spaces:[],assets:[],view:"timeline"};
+const TEMPLATES={
+ garden:{name:"Мой сад",color:"#4eb68c",fields:[{key:"client",label:"Клиент",type:"text"},{key:"object",label:"Объект",type:"text"},{key:"work",label:"Вид работы",type:"text"},{key:"minutes",label:"Минуты",type:"number"},{key:"cost",label:"Стоимость",type:"number"}]},
+ repairs:{name:"Мастерская",color:"#7ba9d8",fields:[{key:"client",label:"Заказчик",type:"text"},{key:"issue",label:"Неисправность",type:"text"},{key:"parts",label:"Материалы",type:"text"},{key:"hours",label:"Часы",type:"number"}]},
+ family:{name:"Моя семья",color:"#dc9ab3",fields:[{key:"person",label:"С кем",type:"text"},{key:"place",label:"Где",type:"text"},{key:"mood",label:"Воспоминание",type:"text"}]},
+ travel:{name:"Путешествия",color:"#68acdc",fields:[{key:"place",label:"Место",type:"text"},{key:"route",label:"Маршрут",type:"text"},{key:"cost",label:"Расход",type:"number"}]},
+ study:{name:"Учёба",color:"#d6ad66",fields:[{key:"topic",label:"Тема",type:"text"},{key:"source",label:"Источник",type:"text"},{key:"hours",label:"Часы",type:"number"}]},
+ creative:{name:"Творчество",color:"#a18ee9",fields:[{key:"project",label:"Проект",type:"text"},{key:"result",label:"Результат",type:"text"},{key:"hours",label:"Часы",type:"number"}]}
+};
 let urls=[];
 const today=()=>new Date().toLocaleDateString("sv-SE");
 function toast(message,problem=false){
@@ -81,7 +89,7 @@ function updatePrecision(){
 function openEvent(id){
  $("eventForm").reset();$("eventId").value=id||"";$("eventFormTitle").textContent=id?"Изменить событие":"Новое событие";
  const e=id?state.events.find(x=>x.id===id):null;
- fillSpaces(e?.spaceId||"personal");
+ fillSpaces(e?.spaceId||($("spaceFilter").value!=="all"?$("spaceFilter").value:"personal"));
  $("eventTitle").value=e?.title||"";
  $("eventKind").value=e?.kind||"event";
  $("eventStatus").value=e?.status||"completed";
@@ -142,6 +150,14 @@ function downloadJson(content,name){
  setTimeout(()=>URL.revokeObjectURL(url),1200);
 }
 document.addEventListener("click",async e=>{
+ const template=e.target.closest("[data-template]");
+ if(template){
+  const spec=TEMPLATES[template.dataset.template];
+  if(!spec)return;
+  try{const space=normalizeSpace(spec);await putSpace(space);$("templatesDialog").close();await reload();$("spaceFilter").value=space.id;render();toast("Создано пространство «"+space.name+"». Теперь добавь первое событие.");}
+  catch(err){toast(err.message||"Не удалось создать пространство",true)}
+  return;
+ }
  const close=e.target.closest("[data-close]");
  if(close){$(close.dataset.close).close();return}
  const open=e.target.closest("[data-event]");
@@ -156,8 +172,10 @@ document.addEventListener("click",async e=>{
 });
 $("eventSpace").addEventListener("change",()=>renderFields());
 $("eventPrecision").addEventListener("change",updatePrecision);
+$("eventKind").addEventListener("change",()=>{if(!$("eventId").value)$("eventStatus").value=$("eventKind").value==="task"?"planned":"completed"});
 $("addEventBtn").addEventListener("click",()=>openEvent(""));
 $("addSpaceBtn").addEventListener("click",()=>openSpace(""));
+$("templatesBtn").addEventListener("click",()=>$("templatesDialog").showModal());
 $("editSpaceBtn").addEventListener("click",()=>{const id=$("spaceFilter").value;if(id==="all"){toast("Сначала выбери пространство в фильтре",true);return}openSpace(id)});
 for(const id of ["spaceFilter","statusFilter"])$(id).addEventListener("change",render);
 $("searchInput").addEventListener("input",render);
