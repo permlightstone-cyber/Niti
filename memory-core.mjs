@@ -54,9 +54,9 @@ export function normalizeEvent(input,old=null,at=new Date().toISOString()) {
     if(typeof v==="boolean"||typeof v==="number")fields[k]=v;
     else if(typeof v==="string")fields[k]=safeText(v,500);
   }
-  const changed = old ? [...(old.history||[]).slice(-49),{
-    at,revision:old.revision||1,previous:{title:old.title,start:old.start,end:old.end,spaceId:old.spaceId,category:old.category,notes:old.notes}
-  }] : [];
+  const previous = old ? {...old} : null;
+  if(previous)delete previous.history;
+  const changed = old ? [...(old.history||[]),{at,revision:old.revision||1,previous}] : [];
   const source=old?.source || (input.source && typeof input.source==="object" ? {
     kind:safeText(input.source.kind||"manual",60),
     ref:safeText(input.source.ref||"",200)
