@@ -1,6 +1,7 @@
 import {DEFAULT_SPACES,normalizeEvent,normalizeSpace,visibleEvents,groupByTime,legacyToEvents,uid,validTime,timePrecision} from "./memory-core.mjs";
 import {openMemoryDb,listEvents,listSpaces,listAssets,getEvent,putEvent,saveEventRevision,putSpace,putAsset,removeAsset,exportMemory,importMemory} from "./memory-store.mjs";
 import {createMemoryTimeline} from "./memory-timeline-ui.mjs";
+import {prepareBahceImport} from "./memory-bahce-bridge.mjs";
 const $=id=>document.getElementById(id);
 const escapeHtml=x=>String(x===undefined||x===null?"":x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let state={events:[],spaces:[],assets:[],view:"timeline"};
@@ -220,6 +221,37 @@ $("backupFile").addEventListener("change",async e=>{
   const result=await importMemory(data);await reload();
   toast("Добавлено: "+result.events+" событий, "+result.spaces+" пространств, "+result.assets+" фото");
  }catch(err){toast(err.message||"Не удалось восстановить копию",true)}finally{e.target.value=""}
+});
+$("bahceImportBtn").addEventListener("click",()=>$("bahceFile").click());
+$("bahceFile").addEventListener("change",async e=>{
+  const file=e.target.files?.[0];if(!file)return;
+  try{
+    if(file.size>30*1024*1024)throw new Error("Файл слишком большой (лимит 30 МБ)");
+    const data=JSON.parse(await file.text());
+    const prepared=prepareBahceImport(data,state.events);
+    if(!prepared.proposed.length){
+      toast("Новых записей нет. Пропущено уже существующих: "+prepared.skippedExisting);
+      return;
+    }
+    const message="Готово к добавлению: "+prepared.proposed.length+" событий. Работа: "+
+      prepared.summary.work+", дела: "+prepared.summary.tasks+", платежи: "+prepared.summary.payments+
+      ". Уже сохранённых: "+prepared.skippedExisting+
+      ". Ошибок / предупреждений: "+prepared.warnings.length+
+      ". Исходная Bahçe не изменится. Добавить в локальную память?";
+    if(!confirm(message))return;
+    // Fresh check before each write; never overwrite a user's edited memory.
+    let stored=0,skipped=0;
+    for(const event of prepared.proposed){
+      const present=await getEvent(event.id);
+      if(present){skipped++;continue}
+      try{await saveEventRevision(event,0);stored++}
+      catch(err){if(String(err?.message).includes("другом окне"))skipped++;
+        else throw new Error("Импортировано "+stored+" записей, далее ошибка: "+err.message)}
+    }
+    await reload();
+    toast("Из Bahçe добавлено "+stored+" записей. Уже существующих пропущено: "+(skipped+prepared.skippedExisting));
+  }catch(err){await reload().catch(()=>{});toast(err.message||"Ошибка импорта Bahçe",true)}
+  finally{e.target.value=""}
 });
 $("legacyBtn").addEventListener("click",async()=>{
  const keys=["niti-clean-v2","niti-clean-v1","niti-live-lab","niti-live-lab-v14"];
