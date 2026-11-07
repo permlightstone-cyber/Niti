@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c1322">
+<meta name="description" content="Нити — универсальная цифровая память человека">
+<title>Нити · Моя память</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="stylesheet" href="./memory.css?v=1">
+</head>
+<body>
+<main class="shell">
+  <header class="top">
+    <div class="identity">
+      <span class="mark">⌁</span>
+      <div><strong>НИТИ</strong><small>Моя память</small></div>
+    </div>
+    <div class="top-right"><span class="chip beta">Бета · локально</span><a class="quiet-link" href="../index.html">Старая версия</a></div>
+  </header>
+  <section class="hero">
+    <span class="eyebrow">Одна жизнь · Своя структура</span>
+    <h1>Всё, что важно.<br><em>На своей линии времени.</em></h1>
+    <p>Сохраняй события, связи, мысли и фотографии так, как удобно тебе. Любое событие можно увидеть линией, карточками или таблицей.</p>
+    <div class="hero-actions">
+      <button id="addEventBtn" class="primary">＋ Новое событие</button>
+      <button id="addSpaceBtn" class="secondary">＋ Моё пространство</button>
+      <button id="templatesBtn" class="secondary">✧ Готовые шаблоны</button>
+    </div>
+  </section>
+  <aside class="privacy">
+    <b>🔒 Пока только на этом устройстве.</b> Эта бета хранит записи и фотографии в браузере, без сервера и без синхронизации. Регулярно скачивай резервную копию. Если очистить данные сайта, информация может исчезнуть.
+  </aside>
+  <section class="stats" aria-label="Сводка">
+    <div><span id="countEvents">0</span><small>записей памяти</small></div>
+    <div><span id="countSpaces">0</span><small>пространств</small></div>
+    <div><span id="countConnected">0</span><small>связей</small></div>
+  </section>
+  <section class="surface">
+    <div class="section-head"><div><span class="eyebrow">МОЯ ВРЕМЕННАЯ ШКАЛА</span><h2>История событий</h2></div><div class="view-controls" role="group" aria-label="Представление">
+      <button class="view active" data-view="timeline" aria-pressed="true">Линия</button>
+      <button class="view" data-view="cards" aria-pressed="false">Карточки</button>
+      <button class="view" data-view="table" aria-pressed="false">Таблица</button>
+    </div></div>
+    <div class="time-explorer" aria-label="Интерактивная линия жизни">
+      <div class="time-nav" role="group" aria-label="Масштаб времени">
+        <button type="button" data-memory-preset="life">Вся жизнь</button>
+        <button type="button" data-memory-preset="years">10 лет</button>
+        <button type="button" data-memory-preset="year">Год</button>
+        <button type="button" data-memory-preset="month">Месяц</button>
+        <button type="button" data-memory-preset="day">День</button>
+        <button type="button" data-memory-preset="hours">Часы</button>
+      </div>
+      <div class="time-hud">
+        <span id="memoryRange" aria-live="polite">Диапазон всей жизни</span>
+        <div class="time-scale">
+          <button id="memoryZoomOut" type="button" aria-label="Отдалить шкалу">−</button>
+          <button id="memoryZoomIn" type="button" aria-label="Приблизить шкалу">+</button>
+        </div>
+      </div>
+      <canvas id="memoryTimeline" class="memory-timeline-canvas" tabindex="0" role="img" aria-label="Линия жизни с событиями, масштабируется жестами, мышью и клавиатурой"></canvas>
+      <p class="time-hint" id="memoryTimelineHint">Двумя пальцами — масштаб · одним — перемещение · нажми на точку</p>
+    </div>
+    <div class="filters">
+      <label>Пространство<select id="spaceFilter"><option value="all">Все пространства</option></select></label>
+      <label>Статус<select id="statusFilter"><option value="all">Все записи</option><option value="completed">Произошло</option><option value="planned">Запланировано</option><option value="cancelled">Архив</option></select></label>
+      <label class="search-field">Поиск<input id="searchInput" type="search" placeholder="Название, человек, место…"></label>
+    </div>
+    <div class="manage-space"><button type="button" id="editSpaceBtn" class="secondary">Настроить выбранное пространство</button></div>
+    <div id="memoryResults" class="results" aria-live="polite"><div class="empty">Загружаем память…</div></div>
+  </section>
+  <section class="surface controls">
+    <div><span class="eyebrow">ТВОИ ДАННЫЕ</span><h2>Перенос и сохранность</h2><p>Копия включает события, пространства и прикреплённые фотографии. Данные не отправляются на сервер.</p>
+      <p class="help">Для импорта Bahçe нужен предварительно выгруженный JSON-снимок формата niti.bahce.snapshot.v1. Это ручной перенос, а не автоматическая синхронизация.</p></div>
+    <div class="control-buttons">
+      <button id="backupBtn" class="secondary">↓ Скачать полную копию</button>
+      <button id="restoreBtn" class="secondary">↑ Восстановить из копии</button>
+      <button id="legacyBtn" class="secondary">⇄ Импорт старых «Нитей»</button>
+      <button id="bahceImportBtn" class="secondary">↳ Импорт Bahçe (JSON)</button>
+      <input type="file" id="backupFile" accept=".json,application/json" hidden>
+      <input type="file" id="bahceFile" accept=".json,application/json" hidden>
+    </div>
+  </section>
+  <footer>НИТИ · Память принадлежит человеку · Экспериментальная версия без облачной синхронизации.</footer>
+</main>
+
+<dialog id="eventDialog">
+<form id="eventForm" class="modal-form">
+ <div class="modal-top"><div><span class="eyebrow">ПАМЯТЬ</span><h2 id="eventFormTitle">Новое событие</h2></div><button type="button" class="x" data-close="eventDialog" aria-label="Закрыть">✕</button></div>
+ <input type="hidden" name="eventId" id="eventId">
+ <label>Название события<input name="title" id="eventTitle" maxlength="200" placeholder="Что произошло?" required></label>
+ <div class="two">
+   <label>Пространство<select id="eventSpace" name="spaceId"></select></label>
+   <label>Тип<select id="eventKind" name="kind"><option value="event">Событие</option><option value="task">Дело / план</option></select></label>
+ </div>
+ <div class="two">
+   <label>Статус<select id="eventStatus" name="status"><option value="completed">Произошло</option><option value="planned">Запланировано</option><option value="cancelled">Архив</option></select></label>
+   <label>Точность времени<select id="eventPrecision" name="precision"><option value="day">День</option><option value="minute">До минуты</option><option value="month">Месяц</option><option value="year">Год</option><option value="unknown">Неизвестно</option></select></label>
+ </div>
+ <div class="two">
+   <label>Начало<input id="eventStart" name="start" placeholder="2026-11-07"></label>
+   <label>Конец (необязательно)<input id="eventEnd" name="end" placeholder="2026-11-07"></label>
+ </div>
+ <label>Категория<input name="category" id="eventCategory" maxlength="60" placeholder="Например, семья / работа / поездка"></label>
+ <div class="two">
+   <label>Метки через запятую<input name="tags" id="eventTags" placeholder="важное, сад, поездка"></label>
+   <label>Люди, места, объекты через запятую<input name="links" id="eventLinks" placeholder="Леонид, Чамьюва"></label>
+ </div>
+ <label>Описание<textarea name="notes" id="eventNotes" rows="3" placeholder="Детали, воспоминания, контекст…"></textarea></label>
+ <div id="customFields" class="custom-fields"></div>
+ <label class="file-label">📷 Фотографии (до 8 МБ каждая)<input type="file" id="eventPhotos" accept="image/*" multiple></label>
+ <div id="existingPhotos" class="photo-grid"></div>
+ <div class="modal-actions"><button type="button" class="secondary" data-close="eventDialog">Отмена</button><button type="submit" class="primary" id="saveEventBtn">Сохранить событие</button></div>
+</form>
+</dialog>
+
+<dialog id="spaceDialog">
+<form id="spaceForm" class="modal-form">
+ <div class="modal-top"><div><span class="eyebrow">КОНСТРУКТОР</span><h2 id="spaceFormTitle">Моё пространство</h2></div><button type="button" class="x" data-close="spaceDialog" aria-label="Закрыть">✕</button></div>
+ <input type="hidden" id="spaceId">
+ <label>Название<input id="spaceName" placeholder="Например, моя мастерская" maxlength="80" required></label>
+ <label>Цвет пространства<input id="spaceColor" type="color" value="#9b86e8"></label>
+ <label>Свои поля, каждое с новой строки<textarea id="spaceFields" rows="5" placeholder="Клиент | text&#10;Часы работы | number&#10;Дата следующего визита | date&#10;Оплачено | checkbox"></textarea></label>
+ <p class="help">Доступные типы: text, number, date, checkbox. Например: «Объект | text». Поля можно настроить позже.</p>
+ <div class="modal-actions"><button type="button" class="secondary" data-close="spaceDialog">Отмена</button><button type="submit" class="primary">Сохранить пространство</button></div>
+</form>
+</dialog>
+<dialog id="templatesDialog">
+ <div class="modal-form">
+  <div class="modal-top"><div><span class="eyebrow">НАЧНИ С ПОЛЬЗЫ</span><h2>Как организовать свою жизнь?</h2></div><button type="button" class="x" data-close="templatesDialog" aria-label="Закрыть">✕</button></div>
+  <p class="help">Шаблон создаёт только пустое рабочее пространство. Его поля и цвет можно изменить. Ничего не публикуется.</p>
+  <div class="template-grid">
+   <button type="button" data-template="garden">🌱 <b>Мой сад</b><small>Объекты, клиенты, работы, оплата</small></button>
+   <button type="button" data-template="repairs">🔧 <b>Мастерская</b><small>Заказы, материалы, время</small></button>
+   <button type="button" data-template="family">❤️ <b>Моя семья</b><small>Люди, события, воспоминания</small></button>
+   <button type="button" data-template="travel">🌍 <b>Путешествия</b><small>Места, маршруты, впечатления</small></button>
+   <button type="button" data-template="study">📚 <b>Учёба</b><small>Курсы, уроки, достижения</small></button>
+   <button type="button" data-template="creative">✨ <b>Творчество</b><small>Идеи, проекты, результаты</small></button>
+  </div>
+ </div>
+</dialog>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script type="module" src="./memory-app.mjs?v=1"></script>
+</body>
+</html>
