@@ -82,7 +82,7 @@ export function createVoiceExperience({onSave,onEdit}){
    setStatus("Волна недоступна — проверяем распознавание речи");
   }
  }
- function closeDraft(){proposal=null;draft.hidden=true;draft.innerHTML="";$("voiceDraftActions").hidden=true}
+ function closeDraft(){proposal=null;draft.hidden=true;$("voiceProposedTitle").textContent="";$("voiceProposedMeta").textContent="";$("voiceProposedNotes").textContent="";$("voiceDraftActions").hidden=true}
  function stop(clear=false){
   cancelled=clear;
   if(recognition){try{clear?recognition.abort():recognition.stop()}catch{}}
