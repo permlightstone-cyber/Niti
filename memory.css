@@ -66,3 +66,7 @@ dialog::backdrop{background:rgba(3,7,15,.77)}
  .controls{display:block}.control-buttons{margin-top:16px}.two{grid-template-columns:1fr}.custom-fields{grid-template-columns:1fr}
  .modal-form{padding:16px}.top-right .chip{display:none}
 }
+
+.manage-space{display:flex;justify-content:flex-end;margin:5px 0 15px}.manage-space button{padding:7px 11px;font-size:11px}
+.template-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.template-grid button{border:1px solid var(--border);border-radius:13px;background:#17253b;color:#e7f0ff;text-align:left;padding:14px;font-size:18px}.template-grid b{display:block;font-size:14px}.template-grid small{display:block;color:var(--muted);font-size:11px;margin-top:3px}.template-grid button:hover{border-color:#9885f5}
+@media(max-width:520px){.template-grid{grid-template-columns:1fr}.manage-space button{width:100%}}
