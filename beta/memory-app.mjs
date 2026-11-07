@@ -194,7 +194,7 @@ $("eventForm").addEventListener("submit",async e=>{
  try{
   const saved=await saveEvent(e);const fromVoice=voiceDraftEditing;
   $("eventDialog").close();voiceDraftEditing=false;await reload();
-  if(fromVoice){$("spaceFilter").value=saved.record.spaceId;render();lifeTimeline?.focusEvent(saved.record);voiceExperience?.onSaveSuccess(spaceFor(saved.record.spaceId).color)}
+  if(fromVoice){$("spaceFilter").value=saved.record.spaceId;render();const target=lifeTimeline?.focusEvent(saved.record);voiceExperience?.onSaveSuccess(spaceFor(saved.record.spaceId).color,target)}
   toast("Событие сохранено"+(saved.savedPhotos?" · фотографий: "+saved.savedPhotos:""));
  }catch(err){toast(err.message||"Ошибка сохранения",true)}finally{$("saveEventBtn").disabled=false}
 });
@@ -286,8 +286,8 @@ voiceExperience=createVoiceExperience({
     await saveEventRevision(event,0);
     await reload();
     $("spaceFilter").value=event.spaceId;render();
-    lifeTimeline?.focusEvent(event);
-    voiceExperience?.onSaveSuccess(spaceFor(event.spaceId).color);
+    const target=lifeTimeline?.focusEvent(event);
+    voiceExperience?.onSaveSuccess(spaceFor(event.spaceId).color,target);
     toast("Событие добавлено в память");
   },
   onEdit:proposal=>{
