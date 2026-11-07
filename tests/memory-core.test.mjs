@@ -15,12 +15,12 @@ test("precision is exact and no artificial time is invented",()=>{
 test("creating a work event keeps object, source and interval",()=>{
  const now="2026-11-07T07:00:00.000Z";
  const e=normalizeEvent({title:"Стрижка кустов",start:"2026-11-06T09:00",end:"2026-11-06T11:00",
-  spaceId:"work",category:"Работа",links:["Леонид"],fields:{client:"Леонид",duration:120},
+  spaceId:"work",category:"Работа",links:["Клиент А"],fields:{client:"Клиент А",duration:120},
   source:{kind:"bahce",ref:"entry-123"}},null,now);
  assert.equal(e.schema,MEMORY_SCHEMA);
  assert.equal(e.precision,"minute");
  assert.equal(e.source.ref,"entry-123");
- assert.equal(e.links[0],"Леонид");
+ assert.equal(e.links[0],"Клиент А");
  assert.equal(e.fields.duration,120);
  assert.equal(e.revision,1);
  assert.equal(e.createdAt,now);
@@ -40,9 +40,9 @@ test("bad intervals and malicious field names are rejected or omitted",()=>{
  assert.deepEqual(e.fields,{client:"сад"});
 });
 test("separate views do not create new copies of events",()=>{
- const a=normalizeEvent({title:"Леонид",start:"2026-11-06T09:00",spaceId:"work",links:["Леонид"]});
+ const a=normalizeEvent({title:"Клиент А",start:"2026-11-06T09:00",spaceId:"work",links:["Клиент А"]});
  const b=normalizeEvent({title:"Семья",start:"2026-11-05",spaceId:"personal"});
- const list=visibleEvents([b,a],{spaceId:"work",search:"Леонид"});
+ const list=visibleEvents([b,a],{spaceId:"work",search:"Клиент А"});
  assert.equal(list.length,1);
  assert.equal(list[0].id,a.id);
  assert.equal(groupByTime([a,b]).length,2);
