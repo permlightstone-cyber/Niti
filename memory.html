@@ -70,12 +70,15 @@
     <div id="memoryResults" class="results" aria-live="polite"><div class="empty">Загружаем память…</div></div>
   </section>
   <section class="surface controls">
-    <div><span class="eyebrow">ТВОИ ДАННЫЕ</span><h2>Перенос и сохранность</h2><p>Копия включает события, пространства и прикреплённые фотографии. Данные не отправляются на сервер.</p></div>
+    <div><span class="eyebrow">ТВОИ ДАННЫЕ</span><h2>Перенос и сохранность</h2><p>Копия включает события, пространства и прикреплённые фотографии. Данные не отправляются на сервер.</p>
+      <p class="help">Для импорта Bahçe нужен предварительно выгруженный JSON-снимок формата niti.bahce.snapshot.v1. Это ручной перенос, а не автоматическая синхронизация.</p></div>
     <div class="control-buttons">
       <button id="backupBtn" class="secondary">↓ Скачать полную копию</button>
       <button id="restoreBtn" class="secondary">↑ Восстановить из копии</button>
       <button id="legacyBtn" class="secondary">⇄ Импорт старых «Нитей»</button>
+      <button id="bahceImportBtn" class="secondary">↳ Импорт Bahçe (JSON)</button>
       <input type="file" id="backupFile" accept=".json,application/json" hidden>
+      <input type="file" id="bahceFile" accept=".json,application/json" hidden>
     </div>
   </section>
   <footer>НИТИ · Память принадлежит человеку · Экспериментальная версия без облачной синхронизации.</footer>
