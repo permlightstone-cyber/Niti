@@ -1,5 +1,5 @@
-const C="niti-beta-2026-11-07-v1";
-const A=["./","./index.html","./memory.css?v=1","./memory-app.mjs?v=1","./memory-core.mjs","./memory-store.mjs","./memory-timeline.mjs","./memory-timeline-ui.mjs","./memory-bahce-bridge.mjs","./manifest.webmanifest"];
+const C="niti-beta-voice-v2";
+const A=["./","./index.html","./memory.css?v=2","./memory-app.mjs?v=2","./voice-experience.mjs","./voice-parser.mjs","./memory-core.mjs","./memory-store.mjs","./memory-timeline.mjs","./memory-timeline-ui.mjs","./memory-bahce-bridge.mjs","./manifest.webmanifest"];
 self.addEventListener("install",event=>event.waitUntil(caches.open(C).then(cache=>cache.addAll(A)).then(()=>self.skipWaiting())));
 self.addEventListener("activate",event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith("niti-beta-")&&key!==C).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener("fetch",event=>{
