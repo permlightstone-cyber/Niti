@@ -176,14 +176,14 @@ export function createVoiceExperience({onSave,onEdit}){
  window.addEventListener("pagehide",()=>{stop(true);releaseMic();if(speechAvailable)speechSynthesis.cancel()});
  return {
   makeProposal,
-  onSaveSuccess(color="#6ee8bd"){
+  onSaveSuccess(color="#6ee8bd",target=null){
    const origin=userCanvas.getBoundingClientRect();
    const timeline=$("memoryTimeline")?.getBoundingClientRect();
    if(!timeline||origin.width===0)return;
    const dot=document.createElement("div");dot.className="voice-flying-thread";dot.style.background=color;
    const startX=origin.left+origin.width*.68,startY=origin.top+origin.height/2;
    dot.style.left=startX+"px";dot.style.top=startY+"px";document.body.appendChild(dot);
-   const endX=timeline.left+timeline.width*.5,endY=timeline.top+timeline.height*.5;
+   const endX=target?.x??timeline.left+timeline.width*.5,endY=target?.y??timeline.top+timeline.height*.5;
    if(!window.matchMedia("(prefers-reduced-motion: reduce)").matches&&dot.animate){
     const move=dot.animate([
      {transform:"translate(0,0) scale(1)",opacity:1},
