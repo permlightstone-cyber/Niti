@@ -1,0 +1,28 @@
+name: Voice beta tests
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "beta/**"
+      - ".github/workflows/voice-beta.yml"
+  push:
+    branches: [feature/voice-to-memory]
+jobs:
+  voice:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate voice and memory module syntax
+        run: |
+          node --check beta/memory-app.mjs
+          node --check beta/voice-parser.mjs
+          node --check beta/voice-experience.mjs
+          node --check beta/memory-timeline-ui.mjs
+          node --check beta/sw.js
+      - name: Check Russian speech-to-event proposals
+        run: node --test beta/tests/*.test.mjs
