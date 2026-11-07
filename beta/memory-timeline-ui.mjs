@@ -1,4 +1,4 @@
-import {dataDomain,panDomain,zoomDomain,presetDomain,coordinate,ticks,marks} from "./memory-timeline.mjs";
+import {dataDomain,panDomain,zoomDomain,presetDomain,coordinate,ticks,marks,eventExtent} from "./memory-timeline.mjs";
 // Visual timeline is a view: never writes to storage and never changes event dates.
 export function createMemoryTimeline({canvas,label,hint,openEvent}){
   const ctx=canvas.getContext("2d");
@@ -160,6 +160,18 @@ export function createMemoryTimeline({canvas,label,hint,openEvent}){
         }
       }
       redraw();
+    },
+    focusEvent(event){
+      if(!domain||!outer)return null;
+      const extent=eventExtent(event);
+      if(!extent)return null;
+      const focus=(extent.start+extent.end)/2,span=Math.max(86400000,Math.min(outer.end-outer.start,domain.end-domain.start));
+      domain=panDomain({start:focus-span/2,end:focus+span/2},0,outer);
+      redraw();
+      const point=points.find(p=>p.id===event.id);
+      if(!point)return null;
+      const bounds=canvas.getBoundingClientRect();
+      return {x:bounds.left+point.x,y:bounds.top+point.y};
     },
     preset(name){if(!domain)return;domain=presetDomain(name,domain,outer,Date.now());redraw()},
     zoomIn(){if(domain)zoom(.5)},

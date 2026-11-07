@@ -7,7 +7,7 @@
 <meta name="description" content="Нити — универсальная цифровая память человека">
 <title>Нити · Моя память</title>
 <link rel="manifest" href="./manifest.webmanifest">
-<link rel="stylesheet" href="./memory.css?v=1">
+<link rel="stylesheet" href="./memory.css?v=2">
 </head>
 <body>
 <main class="shell">
@@ -18,24 +18,53 @@
     </div>
     <div class="top-right"><span class="chip beta">Бета · локально</span><a class="quiet-link" href="../index.html">Старая версия</a></div>
   </header>
-  <section class="hero">
-    <span class="eyebrow">Одна жизнь · Своя структура</span>
-    <h1>Всё, что важно.<br><em>На своей линии времени.</em></h1>
-    <p>Сохраняй события, связи, мысли и фотографии так, как удобно тебе. Любое событие можно увидеть линией, карточками или таблицей.</p>
+  <section class="voice-panel" id="voicePanel" aria-label="Разговор и превращение голоса в память">
+    <div class="voice-panel-head">
+      <div><span class="eyebrow">РАЗГОВОР → ПАМЯТЬ</span><h1>Голос становится нитью.</h1></div>
+      <button class="secondary voice-compact-btn" id="voiceFocus" type="button">Свернуть разговор</button>
+    </div>
+    <div class="voice-lanes">
+      <div class="voice-lane user" id="voiceUserLane">
+        <div class="voice-lane-label"><span class="voice-dot user"></span><strong>Ты</strong><small>Твой голос</small></div>
+        <canvas id="voiceUserWave" class="voice-wave" width="680" height="78" aria-label="Волна микрофона"></canvas>
+      </div>
+      <div class="voice-lane assistant">
+        <div class="voice-lane-label"><span class="voice-dot assistant"></span><strong>Нити</strong><small>Синтезированная подсказка, не живой собеседник</small></div>
+        <canvas id="voiceAssistantWave" class="voice-wave" width="680" height="72" aria-label="Волна голоса-подсказки"></canvas>
+      </div>
+    </div>
+    <p id="voiceStatus" class="voice-status" role="status" aria-live="polite">Готова слушать</p>
+    <div class="voice-transcript"><span class="eyebrow">ТВОИ СЛОВА</span><p id="voiceTranscript">Пока ничего не сказано</p></div>
+    <div class="voice-tools">
+      <button id="voiceMic" class="primary mic-button" type="button" aria-pressed="false">● Говорить</button>
+      <button id="voiceCancel" class="secondary" type="button">Отмена</button>
+      <button id="voiceSpeak" class="secondary" type="button">◌ Голос Нитей</button>
+    </div>
+    <div class="voice-typed">
+      <label for="voiceManual">Или напиши событие самостоятельно</label>
+      <div class="voice-typed-row"><input id="voiceManual" maxlength="4000" placeholder="Сегодня с 9 до 11 стриг кусты в саду"><button id="voiceTextSubmit" class="secondary" type="button">Разобрать</button></div>
+    </div>
+    <section id="voiceDraft" class="voice-proposal" hidden aria-label="Предложенное событие">
+      <div class="voice-proposal-heading"><span class="eyebrow">ПРЕДЛОЖЕНО К СОХРАНЕНИЮ</span><span>Пока черновик</span></div>
+      <h2 id="voiceProposedTitle"></h2>
+      <p id="voiceProposedMeta"></p>
+      <p id="voiceProposedNotes"></p>
+      <div id="voiceDraftActions" class="voice-proposal-buttons" hidden>
+        <button id="voiceSave" type="button" class="primary">Вплести в жизнь</button>
+        <button id="voiceEdit" type="button" class="secondary">Изменить</button>
+        <button id="voiceDiscard" type="button" class="secondary">Отбросить</button>
+      </div>
+    </section>
+    <p class="voice-privacy"><strong>Приватность:</strong> прослушивание начинается только после нажатия кнопки. Распознавание речи может выполняться внешней службой браузера; не диктуй чужие разговоры без согласия. Мы не сохраняем звук — только подтверждённое событие.</p>
+  </section>
+  <details class="voice-other-actions">
+    <summary>＋ Добавить иначе · Пространства и шаблоны</summary>
     <div class="hero-actions">
       <button id="addEventBtn" class="primary">＋ Новое событие</button>
       <button id="addSpaceBtn" class="secondary">＋ Моё пространство</button>
       <button id="templatesBtn" class="secondary">✧ Готовые шаблоны</button>
     </div>
-  </section>
-  <aside class="privacy">
-    <b>🔒 Пока только на этом устройстве.</b> Эта бета хранит записи и фотографии в браузере, без сервера и без синхронизации. Регулярно скачивай резервную копию. Если очистить данные сайта, информация может исчезнуть.
-  </aside>
-  <section class="stats" aria-label="Сводка">
-    <div><span id="countEvents">0</span><small>записей памяти</small></div>
-    <div><span id="countSpaces">0</span><small>пространств</small></div>
-    <div><span id="countConnected">0</span><small>связей</small></div>
-  </section>
+  </details>
   <section class="surface">
     <div class="section-head"><div><span class="eyebrow">МОЯ ВРЕМЕННАЯ ШКАЛА</span><h2>История событий</h2></div><div class="view-controls" role="group" aria-label="Представление">
       <button class="view active" data-view="timeline" aria-pressed="true">Линия</button>
@@ -68,6 +97,14 @@
     </div>
     <div class="manage-space"><button type="button" id="editSpaceBtn" class="secondary">Настроить выбранное пространство</button></div>
     <div id="memoryResults" class="results" aria-live="polite"><div class="empty">Загружаем память…</div></div>
+  </section>
+  <aside class="privacy">
+    <b>🔒 Пока только на этом устройстве.</b> Эта бета хранит записи и фотографии в браузере, без сервера и без синхронизации. Регулярно скачивай резервную копию. Если очистить данные сайта, информация может исчезнуть.
+  </aside>
+  <section class="stats" aria-label="Сводка">
+    <div><span id="countEvents">0</span><small>записей памяти</small></div>
+    <div><span id="countSpaces">0</span><small>пространств</small></div>
+    <div><span id="countConnected">0</span><small>связей</small></div>
   </section>
   <section class="surface controls">
     <div><span class="eyebrow">ТВОИ ДАННЫЕ</span><h2>Перенос и сохранность</h2><p>Копия включает события, пространства и прикреплённые фотографии. Данные не отправляются на сервер.</p>
@@ -140,6 +177,6 @@
  </div>
 </dialog>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script type="module" src="./memory-app.mjs?v=1"></script>
+<script type="module" src="./memory-app.mjs?v=2"></script>
 </body>
 </html>

@@ -2,6 +2,7 @@ import {DEFAULT_SPACES,normalizeEvent,normalizeSpace,visibleEvents,groupByTime,l
 import {openMemoryDb,listEvents,listSpaces,listAssets,getEvent,putEvent,saveEventRevision,putSpace,putAsset,removeAsset,exportMemory,importMemory} from "./memory-store.mjs";
 import {createMemoryTimeline} from "./memory-timeline-ui.mjs";
 import {prepareBahceImport} from "./memory-bahce-bridge.mjs";
+import {createVoiceExperience} from "./voice-experience.mjs";
 const $=id=>document.getElementById(id);
 const escapeHtml=x=>String(x===undefined||x===null?"":x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let state={events:[],spaces:[],assets:[],view:"timeline"};
@@ -15,6 +16,8 @@ const TEMPLATES={
 };
 let urls=[];
 let lifeTimeline=null;
+let voiceExperience=null;
+let voiceDraftEditing=false;
 const today=()=>new Date().toLocaleDateString("sv-SE");
 function toast(message,problem=false){
  const el=$("toast");el.textContent=message;el.classList.toggle("problem",problem);el.classList.add("show");
@@ -137,7 +140,8 @@ async function saveEvent(e){
   id:existing?.id,kind:$("eventKind").value,status:$("eventStatus").value,
   title:$("eventTitle").value,start,end,spaceId:$("eventSpace").value,
   category:$("eventCategory").value,notes:$("eventNotes").value,
-  tags:$("eventTags").value.split(","),links:$("eventLinks").value.split(","),fields
+  tags:$("eventTags").value.split(","),links:$("eventLinks").value.split(","),fields,
+  source:voiceDraftEditing&&!existing?{kind:"voice-confirmed",ref:""}:undefined
  },existing);
  await saveEventRevision(record,existing?.revision||0);
  let savedPhotos=0;
@@ -184,10 +188,13 @@ $("editSpaceBtn").addEventListener("click",()=>{const id=$("spaceFilter").value;
 for(const id of ["spaceFilter","statusFilter"])$(id).addEventListener("change",render);
 $("searchInput").addEventListener("input",render);
 document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>{state.view=b.dataset.view;render()}));
+$("eventDialog").addEventListener("close",()=>{voiceDraftEditing=false});
 $("eventForm").addEventListener("submit",async e=>{
  e.preventDefault();$("saveEventBtn").disabled=true;
  try{
-  const saved=await saveEvent(e);$("eventDialog").close();await reload();
+  const saved=await saveEvent(e);const fromVoice=voiceDraftEditing;
+  $("eventDialog").close();voiceDraftEditing=false;await reload();
+  if(fromVoice){$("spaceFilter").value=saved.record.spaceId;render();const target=lifeTimeline?.focusEvent(saved.record);voiceExperience?.onSaveSuccess(spaceFor(saved.record.spaceId).color,target)}
   toast("Событие сохранено"+(saved.savedPhotos?" · фотографий: "+saved.savedPhotos:""));
  }catch(err){toast(err.message||"Ошибка сохранения",true)}finally{$("saveEventBtn").disabled=false}
 });
@@ -271,6 +278,32 @@ $("legacyBtn").addEventListener("click",async()=>{
 lifeTimeline=createMemoryTimeline({
  canvas:$("memoryTimeline"),label:$("memoryRange"),hint:$("memoryTimelineHint"),
  openEvent:id=>openEvent(id)
+});
+voiceExperience=createVoiceExperience({
+  onSave:async proposal=>{
+    // The proposal is never stored until the person clicks "Вплести в жизнь".
+    const event=normalizeEvent({...proposal,source:{kind:"voice-confirmed",ref:""}});
+    await saveEventRevision(event,0);
+    await reload();
+    $("spaceFilter").value=event.spaceId;render();
+    const target=lifeTimeline?.focusEvent(event);
+    voiceExperience?.onSaveSuccess(spaceFor(event.spaceId).color,target);
+    toast("Событие добавлено в память");
+  },
+  onEdit:proposal=>{
+    voiceDraftEditing=true;
+    openEvent("");
+    $("eventTitle").value=proposal.title;
+    $("eventKind").value=proposal.kind;
+    $("eventStatus").value=proposal.status;
+    $("eventSpace").value=proposal.spaceId;renderFields(proposal.fields);
+    $("eventPrecision").value=proposal.start?timePrecision(proposal.start):"unknown";updatePrecision();
+    $("eventStart").value=proposal.start;
+    $("eventEnd").value=proposal.end;
+    $("eventCategory").value=proposal.category;
+    $("eventLinks").value=(proposal.links||[]).join(", ");
+    $("eventNotes").value=proposal.notes;
+  }
 });
 document.querySelectorAll("[data-memory-preset]").forEach(b=>b.addEventListener("click",()=>lifeTimeline.preset(b.dataset.memoryPreset)));
 $("memoryZoomIn").addEventListener("click",()=>lifeTimeline.zoomIn());
