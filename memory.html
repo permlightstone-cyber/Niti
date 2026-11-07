@@ -25,6 +25,7 @@
     <div class="hero-actions">
       <button id="addEventBtn" class="primary">＋ Новое событие</button>
       <button id="addSpaceBtn" class="secondary">＋ Моё пространство</button>
+      <button id="templatesBtn" class="secondary">✧ Готовые шаблоны</button>
     </div>
   </section>
   <aside class="privacy">
@@ -101,6 +102,20 @@
  <p class="help">Доступные типы: text, number, date, checkbox. Например: «Объект | text». Поля можно настроить позже.</p>
  <div class="modal-actions"><button type="button" class="secondary" data-close="spaceDialog">Отмена</button><button type="submit" class="primary">Сохранить пространство</button></div>
 </form>
+</dialog>
+<dialog id="templatesDialog">
+ <div class="modal-form">
+  <div class="modal-top"><div><span class="eyebrow">НАЧНИ С ПОЛЬЗЫ</span><h2>Как организовать свою жизнь?</h2></div><button type="button" class="x" data-close="templatesDialog" aria-label="Закрыть">✕</button></div>
+  <p class="help">Шаблон создаёт только пустое рабочее пространство. Его поля и цвет можно изменить. Ничего не публикуется.</p>
+  <div class="template-grid">
+   <button type="button" data-template="garden">🌱 <b>Мой сад</b><small>Объекты, клиенты, работы, оплата</small></button>
+   <button type="button" data-template="repairs">🔧 <b>Мастерская</b><small>Заказы, материалы, время</small></button>
+   <button type="button" data-template="family">❤️ <b>Моя семья</b><small>Люди, события, воспоминания</small></button>
+   <button type="button" data-template="travel">🌍 <b>Путешествия</b><small>Места, маршруты, впечатления</small></button>
+   <button type="button" data-template="study">📚 <b>Учёба</b><small>Курсы, уроки, достижения</small></button>
+   <button type="button" data-template="creative">✨ <b>Творчество</b><small>Идеи, проекты, результаты</small></button>
+  </div>
+ </div>
 </dialog>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script type="module" src="./memory-app.mjs?v=1"></script>
