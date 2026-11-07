@@ -1,5 +1,6 @@
 import {DEFAULT_SPACES,normalizeEvent,normalizeSpace,visibleEvents,groupByTime,legacyToEvents,uid,validTime,timePrecision} from "./memory-core.mjs";
 import {openMemoryDb,listEvents,listSpaces,listAssets,getEvent,putEvent,saveEventRevision,putSpace,putAsset,removeAsset,exportMemory,importMemory} from "./memory-store.mjs";
+import {createMemoryTimeline} from "./memory-timeline-ui.mjs";
 const $=id=>document.getElementById(id);
 const escapeHtml=x=>String(x===undefined||x===null?"":x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let state={events:[],spaces:[],assets:[],view:"timeline"};
@@ -12,6 +13,7 @@ const TEMPLATES={
  creative:{name:"Творчество",color:"#a18ee9",fields:[{key:"project",label:"Проект",type:"text"},{key:"result",label:"Результат",type:"text"},{key:"hours",label:"Часы",type:"number"}]}
 };
 let urls=[];
+let lifeTimeline=null;
 const today=()=>new Date().toLocaleDateString("sv-SE");
 function toast(message,problem=false){
  const el=$("toast");el.textContent=message;el.classList.toggle("problem",problem);el.classList.add("show");
@@ -47,6 +49,7 @@ function render(){
  sf.innerHTML='<option value="all">Все пространства</option>'+state.spaces.map(s=>'<option value="'+escapeHtml(s.id)+'">'+escapeHtml(s.name)+'</option>').join("");
  sf.value=state.spaces.some(s=>s.id===prev)?prev:"all";
  const list=visibleEvents(state.events,{spaceId:sf.value,status:$("statusFilter").value,search:$("searchInput").value});
+ lifeTimeline?.render(list,state.spaces);
  $("countEvents").textContent=state.events.filter(e=>e.status!=="cancelled").length;
  $("countSpaces").textContent=state.spaces.length;
  $("countConnected").textContent=new Set(state.events.flatMap(e=>e.links||[])).size;
@@ -233,6 +236,14 @@ $("legacyBtn").addEventListener("click",async()=>{
   await reload();toast("Перенесено "+toAdd.length+" записей; исходные данные не изменены");
  }catch(err){toast(err.message||"Ошибка переноса",true)}
 });
+lifeTimeline=createMemoryTimeline({
+ canvas:$("memoryTimeline"),label:$("memoryRange"),hint:$("memoryTimelineHint"),
+ openEvent:id=>openEvent(id)
+});
+document.querySelectorAll("[data-memory-preset]").forEach(b=>b.addEventListener("click",()=>lifeTimeline.preset(b.dataset.memoryPreset)));
+$("memoryZoomIn").addEventListener("click",()=>lifeTimeline.zoomIn());
+$("memoryZoomOut").addEventListener("click",()=>lifeTimeline.zoomOut());
+
 async function init(){
  try{
   await openMemoryDb();
