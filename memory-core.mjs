@@ -66,7 +66,7 @@ export function normalizeEvent(input,old=null,at=new Date().toISOString()) {
     kind:input.kind==="task"?"task":"event",
     status:["planned","completed","cancelled"].includes(input.status)?input.status:"completed",
     title,start,end,precision,
-    zone:safeText(input.zone||"Europe/Istanbul",80),
+    zone:safeText(input.zone||(typeof Intl!=="undefined"?Intl.DateTimeFormat().resolvedOptions().timeZone:"UTC")||"UTC",80),
     spaceId:safeText(input.spaceId||"personal",80),
     category:safeText(input.category||"",60),
     notes:safeText(input.notes,6000),
@@ -110,7 +110,7 @@ export function legacyToEvents(legacy){
   const push=(array,type,mapper)=>{
     for(const item of (Array.isArray(array)?array:[])){
       if(!item||typeof item!=="object")continue;
-      const rawId=hashText(type+":"+JSON.stringify(item));
+      const rawId=hashText(type+":"+(item.id!==undefined&&item.id!==null?String(item.id):JSON.stringify(item)));
       const p=mapper(item); if(!p||!p.title)continue;
       try{list.push(normalizeEvent({
         ...p,id:"legacy-"+type+"-"+rawId,
