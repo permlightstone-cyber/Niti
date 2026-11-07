@@ -4,9 +4,10 @@
 import {normalizeEvent,validTime} from "./memory-core.mjs";
 export const BAHCE_SNAPSHOT_SCHEMA="niti.bahce.snapshot.v1";
 function hash(s){
- let h=2166136261;
- for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}
- return (h>>>0).toString(36);
+ let h=0xcbf29ce484222325n;
+ const prime=0x100000001b3n,mask=0xffffffffffffffffn;
+ for(let i=0;i<s.length;i++){h^=BigInt(s.charCodeAt(i));h=(h*prime)&mask}
+ return h.toString(36);
 }
 function key(type,value,index=0){
  const ref=String(value?.id??value?.key??type+"-index-"+index).slice(0,400);
@@ -87,7 +88,7 @@ export function prepareBahceImport(snapshot,existing=[]){
    }
    for(const [j,e] of day.entries.entries()){
      if(!e||!e.id){warnings.push("Запись работы без ID пропущена");continue}
-     try{add(fromWork(e,day.date,j,names))}catch{warnings.push("Пропущена некорректная работа №"+(j+1))}
+     try{add(e.type==="plan"||e.status==="planned"?fromPlan(e,j,names):fromWork(e,day.date,j,names))}catch{warnings.push("Пропущена некорректная работа №"+(j+1))}
    }
    for(const [j,p] of day.plans.entries()){
      if(!p||!p.id){warnings.push("Задача без ID пропущена");continue}
