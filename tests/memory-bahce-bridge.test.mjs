@@ -45,3 +45,18 @@ test("currency is preserved without implicit conversion",()=>{
  const s=prepareBahceImport(p);
  assert.equal(s.proposed[0].fields.currency,"EUR");
 });
+
+test("a planned entry duplicated in read_workday.entries and .plans becomes one task",()=>{
+ const plan={id:"pending-a",objectId:"22",note:"Отнести инструменты",date:"2026-11-07",status:"planned",type:"plan"};
+ const input={schema:BAHCE_SNAPSHOT_SCHEMA,workdays:[{date:"2026-11-07",entries:[plan],plans:[plan]}],payments:[]};
+ const result=prepareBahceImport(input);
+ assert.equal(result.total,1);
+ assert.equal(result.summary.tasks,1);
+ assert.equal(result.summary.work,0);
+});
+test("source identifiers remain distinct for many records",()=>{
+ const pays=Array.from({length:5000},(_,i)=>({id:"receipt-"+i,date:"2026-11-06",amount:1,currency:"TRY"}));
+ const result=prepareBahceImport({schema:BAHCE_SNAPSHOT_SCHEMA,workdays:[],payments:pays});
+ assert.equal(result.total,pays.length);
+ assert.equal(new Set(result.proposed.map(x=>x.id)).size,pays.length);
+});
