@@ -42,6 +42,25 @@
       <button class="view" data-view="cards" aria-pressed="false">Карточки</button>
       <button class="view" data-view="table" aria-pressed="false">Таблица</button>
     </div></div>
+    <div class="time-explorer" aria-label="Интерактивная линия жизни">
+      <div class="time-nav" role="group" aria-label="Масштаб времени">
+        <button type="button" data-memory-preset="life">Вся жизнь</button>
+        <button type="button" data-memory-preset="years">10 лет</button>
+        <button type="button" data-memory-preset="year">Год</button>
+        <button type="button" data-memory-preset="month">Месяц</button>
+        <button type="button" data-memory-preset="day">День</button>
+        <button type="button" data-memory-preset="hours">Часы</button>
+      </div>
+      <div class="time-hud">
+        <span id="memoryRange" aria-live="polite">Диапазон всей жизни</span>
+        <div class="time-scale">
+          <button id="memoryZoomOut" type="button" aria-label="Отдалить шкалу">−</button>
+          <button id="memoryZoomIn" type="button" aria-label="Приблизить шкалу">+</button>
+        </div>
+      </div>
+      <canvas id="memoryTimeline" class="memory-timeline-canvas" tabindex="0" role="img" aria-label="Линия жизни с событиями, масштабируется жестами, мышью и клавиатурой"></canvas>
+      <p class="time-hint" id="memoryTimelineHint">Двумя пальцами — масштаб · одним — перемещение · нажми на точку</p>
+    </div>
     <div class="filters">
       <label>Пространство<select id="spaceFilter"><option value="all">Все пространства</option></select></label>
       <label>Статус<select id="statusFilter"><option value="all">Все записи</option><option value="completed">Произошло</option><option value="planned">Запланировано</option><option value="cancelled">Архив</option></select></label>
