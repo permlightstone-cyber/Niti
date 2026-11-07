@@ -70,3 +70,18 @@ dialog::backdrop{background:rgba(3,7,15,.77)}
 .manage-space{display:flex;justify-content:flex-end;margin:5px 0 15px}.manage-space button{padding:7px 11px;font-size:11px}
 .template-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.template-grid button{border:1px solid var(--border);border-radius:13px;background:#17253b;color:#e7f0ff;text-align:left;padding:14px;font-size:18px}.template-grid b{display:block;font-size:14px}.template-grid small{display:block;color:var(--muted);font-size:11px;margin-top:3px}.template-grid button:hover{border-color:#9885f5}
 @media(max-width:520px){.template-grid{grid-template-columns:1fr}.manage-space button{width:100%}}
+
+/* Shared continuous life timeline. All views read the same immutable source records. */
+.time-explorer{margin:19px 0 15px;padding:13px;border:1px solid rgba(165,178,222,.14);border-radius:14px;background:#0c1727}
+.time-nav{display:flex;flex-wrap:wrap;gap:5px}
+.time-nav button{border:1px solid rgba(160,180,224,.13);color:#b9c9e5;background:#1b2942;padding:7px 11px;border-radius:9px;font-size:11px;font-weight:650}
+.time-nav button:active{background:#3b3c81}
+.time-hud{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-top:9px}
+#memoryRange{font-size:12px;color:#c2c9ed;font-variant-numeric:tabular-nums}
+.time-scale{display:flex;gap:5px}
+.time-scale button{border:1px solid var(--border);background:#27365a;color:#e4eafb;font-size:18px;line-height:1;width:34px;height:29px;border-radius:8px}
+.memory-timeline-canvas{display:block;width:100%;height:226px;border-radius:11px;margin-top:10px;touch-action:none;cursor:grab;background:#0c1729}
+.memory-timeline-canvas:active{cursor:grabbing}
+.memory-timeline-canvas:focus-visible{outline:3px solid #a3a0ef;outline-offset:3px}
+.time-hint{margin:7px 3px 1px;font-size:11px;color:#92a5bc}
+@media(max-width:640px){.time-explorer{margin:14px 0;padding:10px}.time-nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.time-nav button{padding:8px 3px}.memory-timeline-canvas{height:210px}#memoryRange{font-size:10px}}
