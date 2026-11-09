@@ -1,0 +1,30 @@
+name: Memory foundation tests
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "memory-*"
+      - "tests/**"
+      - ".github/workflows/memory.yml"
+  push:
+    branches: [feature/universal-memory-foundation]
+jobs:
+  model:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Test universal-memory model
+        run: node --test tests/*.test.mjs
+      - name: Check JavaScript syntax
+        run: |
+          node --check memory-core.mjs
+          node --check memory-store.mjs
+          node --check memory-app.mjs
+          node --check memory-timeline.mjs
+          node --check memory-timeline-ui.mjs
+          node --check memory-bahce-bridge.mjs
